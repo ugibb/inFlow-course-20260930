@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>CourseMap · 探索式预习原型</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#f5f7fb;color:#182230}
+button{font:inherit}
+.app{height:100vh;display:flex;flex-direction:column;overflow:hidden}
+.header{height:68px;background:#fff;border-bottom:1px solid #e7ebf1;display:flex;align-items:center;padding:0 24px;justify-content:space-between}
+.logo{font-size:18px;font-weight:800;letter-spacing:.2px}.logo span{color:#5877d8}
+.course{margin-left:28px;font-size:14px;color:#657184}.course b{color:#202b3a}
+.topRight{display:flex;align-items:center;gap:12px}.progress{width:150px;height:7px;background:#edf0f5;border-radius:8px;overflow:hidden}.progress i{display:block;width:18%;height:100%;background:#617fe0;border-radius:8px}.progressText{font-size:12px;color:#7b8595}
+.main{display:grid;grid-template-columns:300px minmax(500px,1fr) 330px;flex:1;min-height:0}
+.sidebar{background:#fff;border-right:1px solid #e7ebf1;padding:20px 14px;overflow:auto}
+.sideTitle{font-size:13px;font-weight:800;color:#344054;margin:4px 10px 14px}
+.hint{margin:0 10px 18px;padding:10px 11px;background:#f5f7ff;border:1px solid #e3e9ff;border-radius:10px;color:#68728a;font-size:12px;line-height:1.6}
+.node{border-radius:10px;margin:3px 0}.nodeHead{display:flex;align-items:center;gap:8px;padding:10px 11px;cursor:pointer;color:#354052;font-size:13px}.nodeHead:hover{background:#f6f8fb}.node.active>.nodeHead{background:#eef2ff;color:#3157c7;font-weight:700}.arrow{width:14px;text-align:center;color:#99a2b2;font-size:11px}.dot{width:7px;height:7px;border-radius:50%;background:#cbd2dd}.node.active .dot{background:#617fe0}.children{display:none;padding-left:20px}.node.open>.children{display:block}.child{padding:8px 10px;border-left:1px solid #e4e8ee;color:#707b8d;font-size:12px;cursor:pointer;line-height:1.4}.child:hover{color:#3157c7;background:#fafbfe}.child.active{color:#3157c7;font-weight:700;border-left:2px solid #617fe0;background:#f7f8ff}
+.center{overflow:auto;padding:34px 46px 60px;background:linear-gradient(#f8faff,#f5f7fb)}
+.centerInner{max-width:790px;margin:auto}
+.eyebrow{font-size:12px;color:#72809a;font-weight:700;letter-spacing:.5px}
+.title{font-size:30px;line-height:1.3;margin:9px 0 8px;letter-spacing:-.6px}
+.sub{font-size:14px;color:#727d8f;line-height:1.8;margin-bottom:25px}
+.exploreBar{background:#fff;border:1px solid #e5e9f0;border-radius:15px;padding:15px 17px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 5px 18px rgba(30,50,90,.04)}
+.exploreBar .left{display:flex;align-items:center;gap:10px;font-size:13px}.orb{width:28px;height:28px;border-radius:50%;background:#edf1ff;color:#4e6ed3;display:grid;place-items:center;font-size:13px;font-weight:800}
+.btn{border:0;background:#edf1ff;color:#4263c8;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:12px}.btn:hover{background:#e3e9ff}
+.section{margin-top:22px}.sectionTitle{font-size:13px;font-weight:800;color:#354052;margin-bottom:10px}
+.map{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mapCard{background:#fff;border:1px solid #e5e9f0;border-radius:13px;padding:15px;cursor:pointer;transition:.18s;position:relative}.mapCard:hover{transform:translateY(-1px);box-shadow:0 7px 20px rgba(30,50,90,.06)}.mapCard.selected{border-color:#9baded;box-shadow:0 0 0 3px #edf1ff}
+.mapCard .num{font-size:11px;color:#8792a5}.mapCard h3{font-size:14px;margin:7px 0 7px}.mapCard p{font-size:12px;color:#7a8494;line-height:1.6;margin:0}.pill{display:inline-block;font-size:10px;padding:3px 6px;border-radius:5px;background:#f1f3f7;color:#707b8d;margin-top:9px}
+.detail{margin-top:16px;background:#fff;border:1px solid #e2e7ef;border-radius:15px;padding:21px;animation:fade .25s ease}
+@keyframes fade{from{opacity:.2;transform:translateY(5px)}to{opacity:1;transform:none}}
+.detailHead{display:flex;justify-content:space-between;align-items:flex-start;gap:20px}.detail h2{font-size:19px;margin:0 0 6px}.detail .desc{font-size:12px;color:#7a8493;line-height:1.7}.level{font-size:11px;color:#6875a8;background:#f1f3ff;padding:6px 9px;border-radius:8px;white-space:nowrap}
+.reveal{margin-top:18px;border-top:1px solid #edf0f4;padding-top:17px}.revealTitle{font-size:12px;font-weight:800;color:#4c586a;margin-bottom:10px}
+.fact{padding:11px 12px;background:#fafbfc;border-radius:9px;margin-bottom:7px;font-size:12px;line-height:1.65;color:#596577}.fact b{color:#313c4c}
+.connection{display:flex;gap:8px;align-items:center;margin-top:14px;flex-wrap:wrap}.linkNode{font-size:11px;padding:6px 9px;border:1px solid #dfe4ec;border-radius:7px;color:#667286;background:#fff;cursor:pointer}.linkNode:hover{border-color:#9baded;color:#4565c9}.connector{color:#a5adba;font-size:11px}
+.revealBtn{margin-top:12px;color:#4566ca;background:none;border:0;font-size:12px;padding:0;cursor:pointer}
+.teacher{margin-top:16px;border:1px dashed #d8ddeb;background:#fbfcff;border-radius:12px;padding:14px;display:none}.teacher.show{display:block}.teacherLabel{font-size:11px;font-weight:800;color:#64719c;margin-bottom:6px}.teacher p{margin:0;font-size:12px;line-height:1.7;color:#667286}
+.right{background:#fff;border-left:1px solid #e7ebf1;padding:20px 17px;overflow:auto}
+.rightTitle{font-size:13px;font-weight:800;margin:3px 3px 12px}
+.overview{background:#f8f9fc;border:1px solid #e9edf3;border-radius:12px;padding:13px;margin-bottom:15px}.overview strong{font-size:13px}.overview p{font-size:11px;color:#778294;line-height:1.6;margin:7px 0 0}
+.legend{display:flex;gap:10px;font-size:10px;color:#7a8494;margin:11px 2px}.legend span{display:flex;align-items:center;gap:5px}.legend i{width:7px;height:7px;border-radius:50%;background:#9aa6ba}.legend .now{background:#617fe0}
+.miniTimeline{position:relative;margin:16px 3px}.miniTimeline:before{content:"";position:absolute;left:8px;top:5px;bottom:4px;width:1px;background:#e1e5eb}
+.tItem{position:relative;padding:0 0 17px 28px;cursor:pointer}.tItem .tDot{position:absolute;left:4px;top:3px;width:9px;height:9px;border-radius:50%;background:#b9c1ce;border:2px solid #fff;box-shadow:0 0 0 1px #dbe0e8}.tItem.active .tDot{background:#617fe0;box-shadow:0 0 0 3px #e8edff}.tTime{font-size:10px;color:#8a94a4}.tName{font-size:12px;color:#4b5668;margin-top:3px;line-height:1.4}.tItem.active .tName{color:#3157c7;font-weight:700}
+.bottomTip{margin-top:12px;padding:12px;border-radius:10px;background:#f8f9fd;color:#798394;font-size:11px;line-height:1.6}
+.modalBg{position:fixed;inset:0;background:rgba(24,32,48,.38);display:none;align-items:center;justify-content:center;z-index:10}.modal{width:430px;background:#fff;border-radius:16px;padding:22px;box-shadow:0 20px 60px rgba(20,30,60,.2)}.modal h3{margin:0 0 8px;font-size:17px}.modal p{font-size:12px;color:#7a8492;line-height:1.6}.close{float:right;border:0;background:none;font-size:20px;color:#8791a0;cursor:pointer}.modal textarea{width:100%;height:105px;border:1px solid #dfe4ec;border-radius:9px;padding:10px;resize:none;outline:none;font-family:inherit;font-size:13px}.modalActions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:#222b3a;color:#fff;font-size:12px;padding:9px 13px;border-radius:8px;opacity:0;pointer-events:none;transition:.2s}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(max-width:1000px){.main{grid-template-columns:250px 1fr}.right{display:none}.center{padding:25px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="header">
+  <div style="display:flex;align-items:center"><div class="logo">Course<span>Map</span></div><div class="course"><b>IELTS Reading · 课程导学</b>　/　探索式预习</div></div>
+  <div class="topRight"><div class="progress"><i></i></div><div class="progressText">已探索 2 / 11 个知识点</div></div>
+</header>
+
+<main class="main">
+<aside class="sidebar">
+  <div class="sideTitle">课程知识地图</div>
+  <div class="hint">不要急着把整节课读完。<br><b>先看地图 → 选择一个点 → 打开一点内容 → 再决定往哪里探索。</b></div>
+
+  <div class="node open active" data-node="exam">
+    <div class="nodeHead"><span class="arrow">▾</span><span class="dot"></span><span>一、雅思阅读考试基本信息</span></div>
+    <div class="children">
+      <div class="child active" data-key="time">考试时间与题量</div>
+      <div class="child" data-key="types">阅读题型</div>
+      <div class="child" data-key="score">评分与目标分数</div>
+    </div>
+  </div>
+  <div class="node" data-node="tfng">
+    <div class="nodeHead"><span class="arrow">▸</span><span class="dot"></span><span>二、T / F / NG 判断题</span></div>
+    <div class="children">
+      <div class="child" data-key="true">True：原文明确支持</div>
+      <div class="child" data-key="false">False：与原文相反</div>
+      <div class="child" data-key="ng">Not Given：原文没有给</div>
+      <div class="child" data-key="trap">老师特别提醒的陷阱</div>
+    </div>
+  </div>
+  <div class="node" data-node="plan">
+    <div class="nodeHead"><span class="arrow">▸</span><span class="dot"></span><span>三、学习计划与做题策略</span></div>
+    <div class="children">
+      <div class="child" data-key="books">剑桥真题怎么用</div>
+      <div class="child" data-key="accuracy">先保证正确率</div>
+      <div class="child" data-key="schedule">语言能力 + 方法 + 计划</div>
+    </div>
+  </div>
+  <div class="node" data-node="course">
+    <div class="nodeHead"><span class="arrow">▸</span><span class="dot"></span><span>四、课程学习与作业</span></div>
+    <div class="children">
+      <div class="child" data-key="feedback">作业与老师反馈</div>
+      <div class="child" data-key="mark">如何标记问题</div>
+    </div>
+  </div>
+</aside>
+
+<section class="center">
+<div class="centerInner">
+  <div class="eyebrow">PREVIEW · 预习不是阅读答案，而是建立认知地图</div>
+  <h1 class="title" id="mainTitle">先从“考试时间与题量”开始探索</h1>
+  <div class="sub" id="mainSub">你现在不需要知道细节。先弄清楚这个知识点在整节课里“处在什么位置”，再决定要不要继续打开。</div>
+
+  <div class="exploreBar">
+    <div class="left"><div class="orb">✦</div><div><b>探索模式</b><div style="font-size:11px;color:#8791a0;margin-top:2px">当前只展示你主动打开的内容</div></div></div>
+    <button class="btn" id="resetBtn">回到课程全貌</button>
+  </div>
+
+  <div class="section">
+    <div class="sectionTitle">你正在课程的这个位置</div>
+    <div class="map" id="map">
+      <div class="mapCard selected" data-key="time"><span class="num">01 / 考试基本信息</span><h3>考试时间与题量</h3><p>先知道这场考试由什么构成，以及时间如何分配。</p><span class="pill">基础认知</span></div>
+      <div class="mapCard" data-key="types"><span class="num">02 / 考试基本信息</span><h3>阅读题型</h3><p>老师会带你认识不同题型，以及它们之间的区别。</p><span class="pill">结构</span></div>
+      <div class="mapCard" data-key="score"><span class="num">03 / 考试基本信息</span><h3>评分与目标分数</h3><p>目标分数意味着什么？不同目标对应怎样的要求。</p><span class="pill">目标</span></div>
+      <div class="mapCard" data-key="tfng"><span class="num">04 / 后续重点</span><h3>T / F / NG</h3><p>这是课程后面会重点展开的一类判断题。</p><span class="pill">重点预告</span></div>
+    </div>
+  </div>
+
+  <div class="detail" id="detail">
+    <div class="detailHead">
+      <div><h2 id="detailTitle">考试时间与题量</h2><div class="desc" id="detailDesc">这是课程地图里的一个“入口点”。现在先知道它是什么，不需要记住数字。</div></div>
+      <div class="level" id="level">第 1 层 · 看位置</div>
+    </div>
+    <div class="reveal">
+      <div class="revealTitle">打开这一点，你会看到什么？</div>
+      <div id="facts">
+        <div class="fact">阅读部分大致可以理解为：<b>规定时间 + 多篇文章 + 40道题</b>。</div>
+        <div class="fact">老师后面会进一步讲题型、评分，以及不同题型的处理方式。</div>
+      </div>
+      <button class="revealBtn" id="deepBtn">＋ 再打开一层：看看它和哪些知识点有关</button>
+      <div class="connection" id="connections" style="display:none">
+        <span class="linkNode" data-key="types">阅读题型</span><span class="connector">→</span>
+        <span class="linkNode" data-key="score">评分与目标分数</span><span class="connector">→</span>
+        <span class="linkNode" data-key="plan">学习计划</span>
+      </div>
+      <div class="teacher" id="teacher"><div class="teacherLabel">老师的视角 · 预告</div><p id="teacherText">这些考试信息本身不是最终目的。后面的题型、评分和学习计划，都会建立在这里。</p></div>
+    </div>
+  </div>
+
+  <div class="section" style="margin-top:20px">
+    <div class="sectionTitle">探索提示</div>
+    <div class="hint" style="margin:0;background:#fff;border-color:#e5e9f0">
+      <b>你可以随时跳到别的节点。</b> 不需要按照老师上课顺序预习。左侧是“地图”，中间是“探索”，右侧是“你已经看过什么”。
+    </div>
+  </div>
+</div>
+</section>
+
+<aside class="right">
+  <div class="rightTitle">我的探索轨迹</div>
+  <div class="overview"><strong id="trackTitle">你刚刚打开了 1 个知识点</strong><p>这里不是学习进度，而是你的“预习足迹”。预习结束时，你应该对整节课有一张模糊但完整的地图。</p></div>
+  <div class="legend"><span><i class="now"></i>正在探索</span><span><i></i>已看过</span></div>
+  <div class="miniTimeline" id="timeline">
+    <div class="tItem active" data-key="time"><span class="tDot"></span><div class="tTime">01</div><div class="tName">考试时间与题量</div></div>
+    <div class="tItem" data-key="types"><span class="tDot"></span><div class="tTime">02</div><div class="tName">阅读题型</div></div>
+    <div class="tItem" data-key="score"><span class="tDot"></span><div class="tTime">03</div><div class="tName">评分与目标分数</div></div>
+    <div class="tItem" data-key="true"><span class="tDot"></span><div class="tTime">04</div><div class="tName">True / False / NG</div></div>
+    <div class="tItem" data-key="trap"><span class="tDot"></span><div class="tTime">05</div><div class="tName">老师特别提醒的陷阱</div></div>
+    <div class="tItem" data-key="books"><span class="tDot"></span><div class="tTime">06</div><div class="tName">剑桥真题怎么用</div></div>
+    <div class="tItem" data-key="accuracy"><span class="tDot"></span><div class="tTime">07</div><div class="tName">先保证正确率</div></div>
+    <div class="tItem" data-key="feedback"><span class="tDot"></span><div class="tTime">08</div><div class="tName">作业与老师反馈</div></div>
+  </div>
+  <div class="bottomTip">💡 <b>一个重要原则：</b>你可以探索整个地图，但 AI 不会主动把所有答案塞给你。</div>
+</aside>
+</main>
+</div>
+
+<div class="modalBg" id="modalBg"><div class="modal"><button class="close" id="close">×</button><h3>预习问题 · 带着问题进入课程</h3><p id="modalDesc">写下一句话即可。它会成为你观看视频时的关注点。</p><textarea placeholder="例如：为什么 False 和 Not Given 容易混淆？"></textarea><div class="modalActions"><button class="btn" id="cancel">取消</button><button class="btn" id="save" style="background:#617fe0;color:white">加入我的预习问题</button></div></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const data={
+time:{title:"考试时间与题量",desc:"这是课程地图里的一个入口点。先知道它是什么，不需要记住数字。",level:"第 1 层 · 看位置",facts:["阅读部分大致可以理解为：<b>规定时间 + 多篇文章 + 40道题</b>。","老师后面会进一步讲题型、评分，以及不同题型的处理方式。"],links:["types","score","plan"],teacher:"这些考试信息本身不是最终目的。后面的题型、评分和学习计划，都会建立在这里。"},
+types:{title:"阅读题型",desc:"这一节点负责回答：老师接下来会把阅读题拆成哪些不同类型？",level:"第 1 层 · 看结构",facts:["课程会涉及定位与同义替换、填空、T/F/NG、选择、匹配、段落信息匹配、句子完成、标题等。","不同题型的解题思路并不完全相同，因此后面会继续拆开。"],links:["true","false","ng","trap"],teacher:"预习阶段不用记住每一种题型的做法，只要知道：后面会进入“题型层”。"},
+score:{title:"评分与目标分数",desc:"这是把“做对多少题”与“最终目标”联系起来的节点。",level:"第 1 层 · 看目标",facts:["课程会讨论 7、6.5、6 等目标分数，以及不同目标下的得分要求。","这个节点和“学习计划”有关：目标不同，训练策略也可能不同。"],links:["plan","accuracy"],teacher:"老师会提醒你：不要只看总分，还要理解每一个题型和每一道题的价值。"},
+true:{title:"True：原文明确支持",desc:"先建立最基本的判断：题干表达是否能被原文明确支持。",level:"第 2 层 · 理解一个点",facts:["如果原文明确表达了与题干一致的信息，才有可能判断为 True。","真正容易出错的地方，是把“没说”误认为“说了”。"],links:["false","ng"],teacher:"不要只因为“感觉差不多”就选 True。回到原文，看信息是否真的被表达。"},
+false:{title:"False：与原文相反",desc:"False 不只是“原文没有出现”，而是存在能够构成冲突的证据。",level:"第 2 层 · 理解一个点",facts:["需要找到原文与题干之间的明确矛盾。","如果只是没有提到，通常要继续考虑 Not Given。"],links:["ng","trap"],teacher:"False 和 NG 的边界，是老师特别值得关注的地方。"},
+ng:{title:"Not Given：原文没有给",desc:"这个节点的关键不是“我觉得不对”，而是“原文有没有提供足够信息”。",level:"第 2 层 · 理解一个点",facts:["原文没有足够信息支持 True，也没有足够信息证明 False。","因此判断 NG 时，重点是信息是否存在，而不是凭常识判断。"],links:["false","trap"],teacher:"NG 是判断题里非常容易被经验和常识带偏的一类。"},
+trap:{title:"老师特别提醒的陷阱",desc:"这里不是知识点，而是老师经验的入口：哪些地方最容易掉坑？",level:"第 3 层 · 老师经验",facts:["尤其要留意 False 与 Not Given 的区分。","预习时不需要记答案，只需要提前知道：这里值得在正式课程中认真听。"],links:["false","ng"],teacher:"★ 敲黑板：老师的经验不是另一套教材，而是帮助你把注意力放到最值得听的地方。"},
+books:{title:"剑桥真题怎么用",desc:"课程会把剑桥真题作为训练材料，并讨论不同阶段如何使用。",level:"第 1 层 · 学习路径",facts:["较早的真题可以用于熟悉题型和训练；较新的材料更适合后期模拟。","先建立正确率，再逐步处理速度问题。"],links:["accuracy","schedule"],teacher:"不要一开始就把“做得快”当作唯一目标。课程强调先把正确率稳定下来。"},
+accuracy:{title:"先保证正确率",desc:"这是学习策略中的一个核心原则：速度建立在稳定正确率之上。",level:"第 2 层 · 学习原则",facts:["先弄清自己为什么错，再逐渐提高做题速度。","语言能力、方法技巧和合理计划需要一起推进。"],links:["schedule","books"],teacher:"如果基础还不稳定，单纯追求计时速度，很可能只是把错误做得更快。"},
+schedule:{title:"语言能力 + 方法 + 计划",desc:"课程把备考看成三个部分共同作用，而不是只学技巧。",level:"第 1 层 · 总体策略",facts:["语言能力是基础；方法和技巧解决题型；计划决定训练如何持续。","这三个部分会互相影响。"],links:["accuracy","books"],teacher:"真正的备考不是只找一个“万能技巧”，而是把能力、方法和计划组合起来。"},
+feedback:{title:"作业与老师反馈",desc:"课程学习之后，还会进入作业提交与老师反馈环节。",level:"第 1 层 · 学习闭环",facts:["作业提交后，老师会针对问题进行反馈。","老师建议把自己有疑问的题目明确标记出来，方便后续处理。"],links:["mark"],teacher:"把“哪里不懂”留下来，比把所有题都重新做一遍更有价值。"},
+mark:{title:"如何标记问题",desc:"这是把学习过程中的疑问保留下来的方法。",level:"第 2 层 · 学习动作",facts:["标记具体题目和自己的疑问，可以让后续反馈更有针对性。","未来在 CourseMap 中，这类信息也可以成为你的个人学习轨迹。"],links:["feedback"],teacher:"你真正需要积累的，不只是答案，还有“我为什么在这里卡住”。"},
+tfng:{title:"T / F / NG 判断题",desc:"这是课程后续的重要展开区域。现在先知道它会成为一个重点，不必一次把三个概念全部吃透。",level:"第 1 层 · 重点预告",facts:["它会进一步拆成 True、False、Not Given 三个节点。","其中 False 与 Not Given 的区别值得特别留意。"],links:["true","false","ng","trap"],teacher:"预习阶段最重要的不是背定义，而是带着“它们到底怎么区分”的问题进入课堂。"}
+};
+
+let current="time", visited=new Set(["time"]), deep=false;
+
+function select(key, mark=true){
+  current=key; const d=data[key]||data.time;
+  document.querySelectorAll(".child,.mapCard,.tItem").forEach(x=>x.classList.remove("active","selected"));
+  document.querySelectorAll(`[data-key="${key}"]`).forEach(x=>x.classList.add(x.classList.contains("mapCard")?"selected":"active"));
+  const mapCard=document.querySelector(`.mapCard[data-key="${key}"]`);
+  if(mapCard) mapCard.classList.add("selected");
+  document.getElementById("mainTitle").textContent="探索： "+d.title;
+  document.getElementById("mainSub").textContent=d.desc+"  你可以停在这里，也可以继续打开它和其他知识点的关系。";
+  document.getElementById("detailTitle").textContent=d.title;
+  document.getElementById("detailDesc").textContent=d.desc;
+  document.getElementById("level").textContent=d.level;
+  document.getElementById("facts").innerHTML=d.facts.map(x=>`<div class="fact">${x}</div>`).join("");
+  document.getElementById("connections").style.display="none";
+  document.getElementById("teacher").classList.remove("show");
+  document.getElementById("deepBtn").textContent="＋ 再打开一层：看看它和哪些知识点有关";
+  deep=false;
+  document.getElementById("connections").innerHTML=d.links.map((x,i)=>`${i?'<span class="connector">→</span>':''}<span class="linkNode" data-key="${x}">${data[x]?.title||x}</span>`).join("");
+  if(mark){visited.add(key); updateTrack();}
+  document.querySelectorAll(".node").forEach(n=>n.classList.remove("active"));
+  const map={time:"exam",types:"exam",score:"exam",true:"tfng",false:"tfng",ng:"tfng",trap:"tfng",books:"plan",accuracy:"plan",schedule:"plan",feedback:"course",mark:"course",tfng:"tfng"};
+  const n=document.querySelector(`.node[data-node="${map[key]}"]`);
+  if(n){n.classList.add("open","active"); const a=n.querySelector(".arrow"); if(a)a.textContent="▾";}
+  document.getElementById("modalDesc").textContent=`你正在探索“${d.title}”。写下你希望在正式课程中重点验证的问题。`;
+}
+function updateTrack(){
+  document.getElementById("trackTitle").textContent=`你刚刚打开了 ${visited.size} 个知识点`;
+  document.querySelectorAll(".tItem").forEach(x=>{x.classList.toggle("active",x.dataset.key===current); if(visited.has(x.dataset.key))x.style.opacity="1";});
+  document.querySelector(".progress i").style.width=Math.min(92,18+visited.size*7)+"%";
+  document.querySelector(".progressText").textContent=`已探索 ${visited.size} / 11 个知识点`;
+}
+document.querySelectorAll(".nodeHead").forEach(h=>h.addEventListener("click",()=>{const n=h.parentElement;n.classList.toggle("open");h.querySelector(".arrow").textContent=n.classList.contains("open")?"▾":"▸";}));
+document.addEventListener("click",e=>{
+  const el=e.target.closest("[data-key]");
+  if(el && el.dataset.key){select(el.dataset.key);}
+});
+document.getElementById("deepBtn").onclick=()=>{
+  deep=!deep;
+  document.getElementById("connections").style.display=deep?"flex":"none";
+  document.getElementById("teacher").classList.toggle("show",deep);
+  document.getElementById("teacherText").textContent=data[current].teacher;
+  document.getElementById("deepBtn").textContent=deep?"− 收起这一层":"＋ 再打开一层：看看它和哪些知识点有关";
+};
+document.getElementById("resetBtn").onclick=()=>{
+  document.querySelectorAll(".node").forEach(n=>n.classList.remove("open","active"));
+  document.querySelector('.node[data-node="exam"]').classList.add("open","active");
+  visited=new Set(["time"]); select("time",false); updateTrack();
+};
+document.querySelectorAll(".nodeHead").forEach(h=>h.addEventListener("dblclick",()=>{select(h.parentElement.dataset.node==="tfng"?"tfng":h.parentElement.dataset.node==="plan"?"books":h.parentElement.dataset.node==="course"?"feedback":"time")}));
+const modal=document.getElementById("modalBg");
+document.getElementById("save").onclick=()=>{modal.style.display="none";toast("已加入你的预习问题，观看课程时可以继续追踪");};
+document.getElementById("cancel").onclick=document.getElementById("close").onclick=()=>modal.style.display="none";
+document.querySelector(".exploreBar").addEventListener("dblclick",()=>modal.style.display="flex");
+function toast(t){const x=document.getElementById("toast");x.textContent=t;x.classList.add("show");setTimeout(()=>x.classList.remove("show"),1800)}
+updateTrack();
+</script>
+</body>
+</html>

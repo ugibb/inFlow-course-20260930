@@ -1,0 +1,1662 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CourseMap - 雅思阅读导学</title>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --surface: #ffffff;
+    --text: #18202a;
+    --text-secondary: #6c7480;
+    --text-muted: #78818e;
+    --border: #e7e9ee;
+    --border-light: #edf0f3;
+    --primary: #3157b7;
+    --primary-light: #edf2ff;
+    --primary-dark: #244bb3;
+    --orange: #d59a20;
+    --orange-light: #fff8e9;
+    --orange-border: #efdfb2;
+    --green: #4b7b59;
+    --green-light: #edf8f0;
+    --blue-note: #6a75d8;
+    --blue-note-light: #f0f2ff;
+    --blue-note-border: #dce1ff;
+    --red: #a55353;
+    --red-light: #fff1f1;
+    --radius: 14px;
+    --radius-sm: 10px;
+    --shadow: 0 2px 8px rgba(20,28,40,.035);
+    --shadow-md: 0 4px 16px rgba(20,28,40,.07);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  button { font: inherit; border: 0; cursor: pointer; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    overflow: hidden;
+    height: 100vh;
+  }
+
+  .app { height: 100vh; display: flex; flex-direction: column; }
+
+  /* TOP BAR */
+  .topbar {
+    height: 64px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    gap: 24px;
+    z-index: 100;
+    flex-shrink: 0;
+  }
+  .brand { font-weight: 800; font-size: 18px; letter-spacing: -0.5px; color: var(--text); }
+  .phase-badge {
+    font-size: 12px; padding: 5px 9px; border-radius: 999px;
+    background: var(--primary-light); color: var(--primary); font-weight: 600;
+  }
+  .topbar .spacer { flex: 1; }
+  .topbar-progress { font-size: 13px; color: var(--text-secondary); }
+  .topbar-progress b { color: var(--text); }
+  .topbar-crumb { font-size: 13px; color: var(--text-muted); }
+  .topbar-crumb a { color: var(--text-secondary); cursor: pointer; text-decoration: none; }
+  .topbar-crumb a:hover { color: var(--primary); }
+  .topbar-crumb .current { color: var(--text); font-weight: 500; }
+
+  /* PAGE */
+  .page { display: none; flex: 1; min-height: 0; }
+  .page.active { display: flex; flex-direction: column; }
+
+  /* CATALOG */
+  .catalog-page { padding: 32px; overflow-y: auto; flex: 1; }
+  .catalog-header { margin-bottom: 28px; }
+  .catalog-header h1 { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+  .catalog-header p { color: var(--text-secondary); font-size: 14px; }
+
+  .subject-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .subject-card {
+    background: var(--surface); border-radius: var(--radius);
+    padding: 20px; border: 1px solid var(--border);
+    cursor: pointer; transition: all 0.2s; box-shadow: var(--shadow);
+  }
+  .subject-card:hover { border-color: var(--primary); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+  .subject-card.active { border-color: var(--primary); background: var(--primary-light); }
+  .subject-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; margin-bottom: 12px;
+  }
+  .subject-card:nth-child(1) .subject-icon { background: #e7f5ff; }
+  .subject-card:nth-child(2) .subject-icon { background: #fff8e6; }
+  .subject-card:nth-child(3) .subject-icon { background: #edf8f0; }
+  .subject-card:nth-child(4) .subject-icon { background: #f0f2ff; }
+  .subject-name { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+  .subject-meta { font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; }
+  .progress-bar { height: 4px; background: var(--border-light); border-radius: 4px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+  .subject-card:nth-child(1) .progress-fill { background: var(--green); width: 100%; }
+  .subject-card:nth-child(2) .progress-fill { background: var(--orange); width: 0%; }
+  .subject-card:nth-child(3) .progress-fill { background: var(--green); width: 0%; }
+  .subject-card:nth-child(4) .progress-fill { background: var(--blue-note); width: 0%; }
+  .progress-label { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+
+  .lesson-section-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;
+  }
+  .lesson-section-header h2 { font-size: 18px; font-weight: 600; }
+
+  .lesson-list { display: flex; flex-direction: column; gap: 8px; }
+  .lesson-item {
+    background: var(--surface); border-radius: var(--radius-sm);
+    padding: 14px 18px; border: 1px solid var(--border);
+    display: flex; align-items: center; gap: 14px;
+    cursor: pointer; transition: all 0.15s; box-shadow: var(--shadow);
+  }
+  .lesson-item:hover { border-color: var(--primary); box-shadow: var(--shadow-md); }
+  .lesson-item.current { border-color: var(--primary); background: var(--primary-light); }
+  .lesson-num {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--bg); display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600; color: var(--text-secondary); flex-shrink: 0;
+  }
+  .lesson-info { flex: 1; min-width: 0; }
+  .lesson-title { font-size: 14px; font-weight: 500; margin-bottom: 2px; }
+  .lesson-subtitle { font-size: 12px; color: var(--text-muted); }
+  .badge { font-size: 11px; padding: 4px 8px; border-radius: 6px; font-weight: 500; }
+  .badge-learning { background: var(--orange-light); color: var(--orange); }
+
+  /* THREE-COLUMN LAYOUT */
+  .layout { flex: 1; min-height: 0; display: grid; }
+  .side {
+    background: var(--surface); overflow-y: auto;
+  }
+  .side.left { border-right: 1px solid var(--border); }
+  .side.right { border-left: 1px solid var(--border); }
+  .side h3 {
+    font-size: 13px; font-weight: 600; margin: 0;
+    padding: 20px 18px 10px; color: var(--text-muted);
+  }
+  .main { min-width: 0; overflow: auto; }
+
+  /* Preview layout */
+  #page-preview .layout { grid-template-columns: 250px 1fr 310px; }
+  #page-preview .main { padding: 26px 30px; background: var(--bg); }
+
+  /* Learn layout */
+  #page-learn .layout { grid-template-columns: 260px minmax(560px, 1fr) 330px; }
+  #page-learn .main { padding: 0; background: #eef0f3; }
+
+  /* Review layout */
+  #page-review .layout { grid-template-columns: 250px 1fr 330px; }
+  #page-review .main { padding: 22px 26px; background: var(--bg); }
+
+  /* Practice layout */
+  #page-practice .layout { grid-template-columns: 250px 1fr 330px; }
+  #page-practice .main { padding: 26px 30px; background: var(--bg); overflow-y: auto; }
+
+  .practice-header { margin-bottom: 20px; }
+  .practice-header h1 { font-size: 24px; margin-bottom: 6px; }
+  .practice-header p { color: var(--text-secondary); font-size: 14px; }
+
+  .practice-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  .practice-stat { padding: 16px; text-align: center; }
+  .practice-stat b { font-size: 28px; display: block; margin-top: 6px; color: var(--primary); }
+
+  .question-card { padding: 20px; margin-bottom: 16px; }
+  .question-card h3 { font-size: 15px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .question-type { font-size: 11px; padding: 3px 8px; border-radius: 5px; background: var(--primary-light); color: var(--primary); font-weight: 600; }
+  .question-text { font-size: 14px; line-height: 1.7; margin-bottom: 14px; color: var(--text); }
+
+  .options { display: flex; flex-direction: column; gap: 8px; }
+  .option {
+    padding: 12px 14px; border: 1px solid #e4e7ec; border-radius: 9px;
+    cursor: pointer; transition: all 0.15s; font-size: 13px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .option:hover { border-color: var(--primary); background: #fafbff; }
+  .option.selected { border-color: var(--primary); background: var(--primary-light); }
+  .option.correct { border-color: var(--green); background: var(--green-light); }
+  .option.incorrect { border-color: var(--red); background: var(--red-light); }
+  .option-marker {
+    width: 22px; height: 22px; border-radius: 50%; border: 2px solid #ccd1d8;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 600; color: #68717d; flex-shrink: 0;
+  }
+  .option.selected .option-marker { border-color: var(--primary); color: var(--primary); }
+  .option.correct .option-marker { border-color: var(--green); color: var(--green); background: var(--green-light); }
+  .option.incorrect .option-marker { border-color: var(--red); color: var(--red); background: var(--red-light); }
+
+  .fill-input {
+    width: 100%; padding: 10px 12px; border: 1px solid #dfe3e9;
+    border-radius: 8px; font-size: 13px; outline: none;
+  }
+  .fill-input:focus { border-color: var(--primary); }
+  .fill-input.correct { border-color: var(--green); background: var(--green-light); }
+  .fill-input.incorrect { border-color: var(--red); background: var(--red-light); }
+
+  .feedback {
+    margin-top: 12px; padding: 12px 14px; border-radius: 9px;
+    font-size: 13px; line-height: 1.6; display: none;
+  }
+  .feedback.show { display: block; }
+  .feedback.correct { background: var(--green-light); border: 1px solid #b8d4c0; color: #3d6347; }
+  .feedback.incorrect { background: var(--red-light); border: 1px solid #e0c4c4; color: #7a4545; }
+
+  .check-btn {
+    margin-top: 12px; padding: 9px 16px; background: var(--primary);
+    color: #fff; border-radius: 8px; font-size: 13px; font-weight: 500;
+  }
+  .check-btn:hover { background: var(--primary-dark); }
+  .check-btn:disabled { background: #ccd1d8; cursor: not-allowed; }
+
+  .progress-section { margin-top: 24px; }
+  .progress-section h2 { font-size: 16px; margin-bottom: 12px; }
+  .progress-bar-large {
+    height: 12px; background: #edf0f3; border-radius: 12px;
+    overflow: hidden; margin-bottom: 8px;
+  }
+  .progress-bar-large i {
+    display: block; height: 100%; background: var(--primary);
+    border-radius: 12px; transition: width 0.3s;
+  }
+
+  /* TREE ITEMS (white sidebar) */
+  .tree-item {
+    padding: 9px 18px; font-size: 13px; color: #515b68;
+    display: flex; gap: 8px; align-items: center;
+    cursor: pointer; transition: background 0.1s;
+  }
+  .tree-item:hover { background: #f6f7f9; }
+  .tree-item.active { font-weight: 650; color: var(--primary); background: var(--primary-light); }
+  .tree-child { padding-left: 34px; }
+  .tree-grandchild { padding-left: 50px; font-size: 12px; color: #7a828d; }
+  .tree-grandchild .node-dot { width: 4px; height: 4px; background: #d5d9e0; }
+  .tree-grandchild.active { color: var(--primary); }
+  .tree-grandchild.active .node-dot { background: var(--primary); }
+  .tree-item .node-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #ccd1d8; flex-shrink: 0;
+  }
+  .tree-item.active .node-dot { background: var(--primary); }
+  .tree-item.in-range .node-dot { background: rgba(49,87,183,0.4); }
+
+  /* CARD */
+  .card {
+    background: var(--surface); border: 1px solid #e6e8ed;
+    border-radius: var(--radius); box-shadow: var(--shadow);
+  }
+
+  /* MISC */
+  .muted { color: var(--text-muted); }
+  .small { font-size: 12px; }
+  .btn {
+    padding: 9px 13px; border-radius: 9px;
+    background: #eef1f5; color: #34404d; font-size: 13px;
+  }
+  .btn.primary { background: #1e293b; color: #fff; }
+  .btn.ghost { background: var(--surface); border: 1px solid #dfe3e9; }
+  .btn.primary-blue { background: var(--primary); color: #fff; }
+  .row { display: flex; align-items: center; gap: 10px; }
+  .pill {
+    font-size: 11px; padding: 4px 7px; border-radius: 6px;
+    background: #f0f2f5; color: #68717d;
+  }
+  .pill.active { background: var(--primary-light); color: var(--primary); }
+  .tag {
+    display: inline-block; font-size: 10px; padding: 3px 6px;
+    border-radius: 5px; background: var(--primary-light); color: #4a5ea4;
+  }
+  .tag.danger { background: var(--red-light); color: var(--red); }
+  .tag.success { background: var(--green-light); color: var(--green); }
+
+  /* ===== PREVIEW PAGE ===== */
+  .hero { display: grid; grid-template-columns: 1fr 310px; gap: 18px; margin-bottom: 18px; }
+  .hero h1 { margin: 0 0 8px; font-size: 27px; }
+  .hero p { margin: 0; line-height: 1.65; color: #68727e; font-size: 14px; }
+  .metric { padding: 17px; }
+  .metric strong { font-size: 26px; display: block; margin-top: 6px; }
+  .check { display: flex; align-items: center; gap: 9px; padding: 7px 0; font-size: 13px; }
+  .check input { accent-color: var(--primary); }
+
+  .map-section { padding: 20px; margin-bottom: 18px; }
+  .maphead { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .nodes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .node {
+    padding: 15px; border: 1px solid #e4e7ec; border-radius: 11px;
+    cursor: pointer; transition: border-color 0.15s;
+  }
+  .node:hover { border-color: #b9c4d7; }
+  .node.active { border-color: var(--primary); background: var(--primary-light); }
+  .node strong { font-size: 14px; }
+  .node span { display: block; color: var(--text-muted); font-size: 12px; margin-top: 7px; line-height: 1.5; }
+
+  .preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .preview-grid .card { padding: 18px; }
+  .preview-grid .card h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .preview-grid .card h3 .tag { font-size: 10px; padding: 2px 6px; border-radius: 3px; background: var(--orange-light); color: var(--orange); font-weight: 600; }
+  .preview-grid .card p { font-size: 13px; color: var(--text-secondary); line-height: 1.7; }
+  .highlight-box {
+    margin-top: 10px; padding: 10px 14px;
+    background: var(--orange-light); border-left: 3px solid var(--orange);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    font-size: 13px; color: #7c5e00;
+  }
+  .source-entry {
+    border-left: 3px solid #d9dde5; padding-left: 12px;
+    font-size: 13px; line-height: 1.65; color: #59636f;
+  }
+
+  .cta-btn {
+    background: #17202b; color: #fff; padding: 13px 16px;
+    border-radius: 10px; font-size: 14px; font-weight: 500;
+  }
+
+  /* ===== LEARN PAGE ===== */
+  .video {
+    background: #121820; border-radius: var(--radius); overflow: hidden;
+    color: #fff; box-shadow: 0 8px 30px rgba(15,20,28,.16); margin: 18px 18px 0;
+  }
+  .video video { width: 100%; display: block; max-height: 38vh; }
+  .video-controls {
+    padding: 11px 14px; background: #171e27;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .video-controls .bar { flex: 1; height: 4px; background: #3a434e; border-radius: 4px; cursor: pointer; }
+  .video-controls .bar i { display: block; height: 100%; background: #fff; border-radius: 4px; transition: width 0.3s; }
+  .video-controls .time-label { font-size: 12px; color: #8a95a3; font-variant-numeric: tabular-nums; min-width: 90px; }
+  .speed-btn {
+    font-size: 12px; padding: 5px 9px; border: 1px solid #3a434e;
+    border-radius: 8px; background: transparent; color: #8a95a3; cursor: pointer;
+  }
+  .note-quick-btn {
+    padding: 7px 14px; background: var(--primary); color: #fff;
+    border-radius: 8px; font-size: 12px; font-weight: 500;
+    margin-left: auto;
+  }
+
+  .knowledge-card { margin: 16px 18px 0; padding: 18px; }
+  .knowledge-card h2 { font-size: 19px; margin: 8px 0; }
+  .knowledge-card p { line-height: 1.7; font-size: 13px; color: #59636f; }
+  .insight {
+    padding: 14px; border-radius: 11px;
+    background: var(--orange-light); border: 1px solid var(--orange-border); margin-top: 14px;
+  }
+  .insight p { font-size: 14px; line-height: 1.65; color: #7c5e00; margin-top: 8px; }
+  .my-note {
+    padding: 14px; border-radius: 11px;
+    background: var(--blue-note-light); border: 1px solid var(--blue-note-border); margin-top: 12px;
+  }
+  .my-note p { font-size: 13px; line-height: 1.6; color: #4a5080; margin-top: 8px; }
+
+  /* Transcript in right sidebar */
+  .transcript-sidebar {
+    border-bottom: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    height: calc(38vh + 50px);
+  }
+  .transcript-sidebar .ts-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 16px; flex-shrink: 0;
+  }
+  .transcript-sidebar .ts-header b { font-size: 13px; }
+  .transcript-scroll {
+    overflow-y: auto; flex: 1; padding: 0 16px 12px;
+  }
+  .transcript-section {
+    margin: 12px 18px 18px; padding: 14px;
+    background: var(--surface); border: 1px solid #e6e8ed;
+    border-radius: 11px; box-shadow: var(--shadow);
+  }
+  .transcript-line {
+    padding: 5px 7px; font-size: 13px; line-height: 1.7;
+    color: var(--text-muted); cursor: pointer; transition: all 0.2s;
+    border-radius: 6px;
+  }
+  .transcript-line:hover { color: var(--text-secondary); background: #f6f7f9; }
+  .transcript-line.read { color: var(--text); }
+  .transcript-line.current {
+    color: var(--primary); font-weight: 500;
+    background: var(--primary-light);
+  }
+  .transcript-line .ts {
+    font-size: 11px; color: var(--text-muted); margin-right: 8px;
+    font-variant-numeric: tabular-nums; opacity: 0.6;
+  }
+  .transcript-line.current .ts { opacity: 1; color: var(--primary); }
+
+  /* ===== REVIEW PAGE ===== */
+  .reviewhead { display: flex; justify-content: space-between; align-items: end; margin-bottom: 18px; }
+  .reviewhead h1 { margin: 0; font-size: 26px; }
+  .scoregrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+  .stat { padding: 15px; }
+  .stat b { font-size: 23px; display: block; margin-top: 7px; }
+  .reviewgrid { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 14px; }
+  .panel { padding: 18px; }
+
+  .recall { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .recallcard {
+    border: 1px solid #e2e6eb; border-radius: 11px;
+    padding: 14px; cursor: pointer; transition: border-color 0.15s;
+  }
+  .recallcard:hover { border-color: #b9c4d7; }
+  .recallcard .ans { display: none; margin-top: 10px; color: #59636f; line-height: 1.6; font-size: 13px; }
+  .recallcard.open .ans { display: block; }
+
+  .weak { padding: 12px; border: 1px solid #e6e8ed; border-radius: 10px; margin-top: 10px; }
+  .barline { height: 8px; background: #edf0f3; border-radius: 8px; overflow: hidden; }
+  .barline i { display: block; height: 100%; background: #6878a8; border-radius: 8px; }
+
+  .mini-timeline { margin-top: 8px; }
+  .mini {
+    display: flex; gap: 12px; padding: 10px 0;
+    border-bottom: 1px solid var(--border-light); cursor: pointer;
+  }
+  .mini .when { width: 52px; font-size: 11px; color: #6b7480; flex-shrink: 0; }
+  .mini b { font-size: 12px; }
+  .mini p { margin: 3px 0 0; font-size: 11px; color: #7a828d; }
+
+  .sourcejump {
+    padding: 12px; border-radius: 10px;
+    background: #f7f8fa; border: 1px solid #e4e7ec; margin-top: 12px;
+  }
+
+  /* RIGHT SIDEBAR COMMON */
+  .rail { padding: 18px; }
+  .railtitle { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .notequick {
+    padding: 14px; background: #f8f9fb;
+    border: 1px solid #e4e7ec; border-radius: 11px; margin-bottom: 16px;
+  }
+  .notequick p { line-height: 1.6; }
+
+  /* TIMELINE (right sidebar) */
+  .timeline { position: relative; }
+  .timeline::before {
+    content: ""; position: absolute; left: 20px; top: 8px; bottom: 8px;
+    width: 2px; background: #e3e6eb;
+  }
+  .event {
+    position: relative; padding: 0 12px 18px 48px; cursor: pointer;
+  }
+  .dot {
+    position: absolute; left: 15px; top: 2px;
+    width: 12px; height: 12px; border: 3px solid #fff;
+    border-radius: 50%; background: #718096;
+    box-shadow: 0 0 0 1px #ccd1d8;
+  }
+  .event.highlight .dot { background: var(--orange); }
+  .event.note .dot { background: var(--blue-note); }
+  .event b { font-size: 12px; }
+  .event p { margin: 5px 0 0; font-size: 12px; line-height: 1.5; color: #69727e; }
+  .event:hover b { color: var(--primary); }
+
+  /* NOTE MODAL */
+  .modal {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(20,25,32,.42); display: none;
+    align-items: center; justify-content: center;
+  }
+  .modal.open { display: flex; }
+  .modalbox {
+    width: 520px; background: var(--surface); border-radius: 16px;
+    padding: 22px; box-shadow: 0 20px 60px rgba(0,0,0,.18);
+  }
+  .modalbox textarea {
+    width: 100%; min-height: 130px; border: 1px solid #dfe3e9;
+    border-radius: 10px; padding: 12px; resize: vertical;
+    font: inherit; outline: none;
+  }
+  .modalbox textarea:focus { border-color: var(--primary); }
+
+  /* TOAST */
+  .toast {
+    position: fixed; right: 22px; bottom: 22px;
+    background: #202832; color: #fff; padding: 11px 15px;
+    border-radius: 9px; font-size: 13px;
+    opacity: 0; transform: translateY(8px); transition: 0.2s;
+    pointer-events: none; z-index: 300;
+  }
+  .toast.show { opacity: 1; transform: none; }
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- TOP BAR -->
+<header class="topbar" id="topbar">
+  <div class="brand">CourseMap</div>
+  <span class="phase-badge" id="phaseBadge">PREVIEW · 预习</span>
+  <span class="topbar-crumb" id="breadcrumb">
+    <span>雅思备考</span> · <span class="current">阅读</span>
+  </span>
+  <div class="spacer"></div>
+  <span class="topbar-progress" id="topProgress">总时长 <b>34:12</b></span>
+</header>
+
+<!-- ===== CATALOG PAGE ===== -->
+<div class="page active" id="page-catalog">
+  <div class="catalog-page">
+    <div class="catalog-header">
+      <h1>雅思备考课程</h1>
+      <p>共 4 个科目 · 阅读导学课程</p>
+    </div>
+    <div class="subject-grid">
+      <div class="subject-card" onclick="selectSubject(0)">
+        <div class="subject-icon">🎧</div>
+        <div class="subject-name">听力</div>
+        <div class="subject-meta">即将开放</div>
+        <div class="progress-bar"><div class="progress-fill"></div></div>
+        <div class="progress-label">敬请期待</div>
+      </div>
+      <div class="subject-card" onclick="selectSubject(1)">
+        <div class="subject-icon">🗣️</div>
+        <div class="subject-name">口语</div>
+        <div class="subject-meta">即将开放</div>
+        <div class="progress-bar"><div class="progress-fill"></div></div>
+        <div class="progress-label">敬请期待</div>
+      </div>
+      <div class="subject-card active" onclick="selectSubject(2)">
+        <div class="subject-icon">📖</div>
+        <div class="subject-name">阅读</div>
+        <div class="subject-meta">导学课 · 34:12</div>
+        <div class="progress-bar"><div class="progress-fill"></div></div>
+        <div class="progress-label">当前课程</div>
+      </div>
+      <div class="subject-card" onclick="selectSubject(3)">
+        <div class="subject-icon">✍️</div>
+        <div class="subject-name">写作</div>
+        <div class="subject-meta">即将开放</div>
+        <div class="progress-bar"><div class="progress-fill"></div></div>
+        <div class="progress-label">敬请期待</div>
+      </div>
+    </div>
+    <div class="lesson-section-header">
+      <h2>阅读课程</h2>
+    </div>
+    <div class="lesson-list">
+      <div class="lesson-item current" onclick="enterLesson('阅读导学')">
+        <div class="lesson-num">1</div>
+        <div class="lesson-info">
+          <div class="lesson-title">阅读导学</div>
+          <div class="lesson-subtitle">考情介绍 · 题型总览 · 评分标准 · 复习计划 · 课程安排</div>
+        </div>
+        <span class="badge badge-learning">学习中</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PREVIEW PAGE ===== -->
+<div class="page" id="page-preview">
+  <div class="layout">
+    <aside class="side left">
+      <h3>本节知识地图</h3>
+      <div id="preview-tree">
+      <div class="tree-item" data-start="0" data-end="78"><span class="node-dot"></span>▾ 课程总览</div>
+      <div class="tree-item tree-child" data-start="0" data-end="30"><span class="node-dot"></span>核心框架与目标</div>
+      <div class="tree-item tree-child" data-start="30" data-end="43"><span class="node-dot"></span>适用人群</div>
+      <div class="tree-item tree-child" data-start="43" data-end="78"><span class="node-dot"></span>课程结构</div>
+      <div class="tree-item" data-start="78" data-end="975"><span class="node-dot"></span>▾ 雅思阅读考情介绍</div>
+      <div class="tree-item tree-child" data-start="78" data-end="200"><span class="node-dot"></span>考试基本信息</div>
+      <div class="tree-item tree-child" data-start="200" data-end="495"><span class="node-dot"></span>主要题型</div>
+      <div class="tree-item tree-child" data-start="495" data-end="975"><span class="node-dot"></span>评分标准与目标分数</div>
+      <div class="tree-item" data-start="975" data-end="1340"><span class="node-dot"></span>▾ 复习计划与刷题策略</div>
+      <div class="tree-item tree-child" data-start="975" data-end="1050"><span class="node-dot"></span>提分三大要素</div>
+      <div class="tree-item tree-child" data-start="1050" data-end="1260"><span class="node-dot"></span>刷题顺序（剑桥雅思系列）</div>
+      <div class="tree-item tree-child" data-start="1260" data-end="1320"><span class="node-dot"></span>考试形式选择</div>
+      <div class="tree-item tree-child" data-start="1320" data-end="1340"><span class="node-dot"></span>个性化计划申请</div>
+      <div class="tree-item" data-start="1340" data-end="2020"><span class="node-dot"></span>▾ 课程介绍与作业要求</div>
+      <div class="tree-item tree-child" data-start="1340" data-end="1560"><span class="node-dot"></span>课程内容</div>
+      <div class="tree-item tree-child" data-start="1640" data-end="2020"><span class="node-dot"></span>作业提交要求</div>
+      <div class="tree-item" data-start="2020" data-end="2052"><span class="node-dot"></span>▾ 课后作业</div>
+      <div class="tree-item tree-child" data-start="2020" data-end="2040"><span class="node-dot"></span>基础积累</div>
+      <div class="tree-item tree-child" data-start="2040" data-end="2050"><span class="node-dot"></span>真题练习</div>
+      <div class="tree-item tree-child" data-start="2050" data-end="2052"><span class="node-dot"></span>其他要求</div>
+
+      </div>
+    </aside>
+    <main class="main">
+      <section class="hero">
+        <div class="card" style="padding:24px">
+          <h1>先看懂这节课讲了什么</h1>
+          <p>不用播放完整视频。先用 2-5 分钟建立知识地图，知道老师会讲哪些东西、哪些地方值得特别留意，再决定进入网课。</p>
+          <div style="margin-top:18px" class="row">
+            <button class="cta-btn" onclick="switchPhase('learn')">开始预习</button>
+            <button class="btn ghost" onclick="switchPhase('practice')">📝 直接练习</button>
+            <button class="btn ghost" onclick="toast('已标记：稍后重点看')">☆ 稍后重点看</button>
+          </div>
+        </div>
+        <div class="card metric">
+          <span class="muted small">预计预习时间</span>
+          <strong>03:20</strong>
+          <span class="muted small">覆盖 15 个知识模块 · 7 个老师重点</span>
+          <div style="margin-top:16px">
+            <div class="check"><input type="checkbox" checked> 我已知道考试结构</div>
+            <div class="check"><input type="checkbox"> 我知道本课重点</div>
+            <div class="check"><input type="checkbox"> 我知道要解决的问题</div>
+          </div>
+        </div>
+      </section>
+      <section class="card map-section">
+        <div class="maphead">
+          <div><b>课程知识地图</b><div class="muted small" style="margin-top:4px">只放"知识点"，不把重点/笔记混进树里</div></div>
+          <span class="pill">点击节点查看预习卡片</span>
+        </div>
+        <div class="nodes" id="nodes">
+          <div class="node active" data-node="n0"><strong>01 · 课程总览</strong><span>3 个知识模块</span></div>
+          <div class="node" data-node="n1"><strong>02 · 雅思阅读考情介绍</strong><span>3 个知识模块</span></div>
+          <div class="node" data-node="n2"><strong>03 · 复习计划与刷题策略</strong><span>4 个知识模块</span></div>
+          <div class="node" data-node="n3"><strong>04 · 课程介绍与作业要求</strong><span>2 个知识模块</span></div>
+          <div class="node" data-node="n4"><strong>05 · 课后作业</strong><span>3 个知识模块</span></div>
+
+        </div>
+      </section>
+      <section class="preview-grid">
+    <div class="card">
+      <h3>考试基本信息 <span class="tag">重点</span></h3>
+      <p>考试时间60分钟（含填答案时间），3篇文章共40题（每篇13-14题），难度逐篇递增。文体以议论文、说明文为主，不考记叙文。题材注意文理科平衡。建议先翻阅剑桥雅思4-13了解整体。</p>
+      <div class="highlight-box">不管纸笔还是机考，60分钟都包含答题和填写答题卡的时间</div>
+    </div>
+    <div class="card">
+      <h3>题型分类与解题逻辑 <span class="tag">核心</span></h3>
+      <p>课程按难度递进：基础（定位+同义替换）→ 细节题（填空+判断）→ 过渡题（选择）→ 宏观题（匹配+Heading）。判断题有True/False/Not Given三个选项，False和NG的区分是难点。填空+判断占约20题/40题。</p>
+      <div class="highlight-box">填空+判断占约20题（总共40题），是必须把握的核心拿分题型</div>
+    </div>
+    <div class="card">
+      <h3>目标分数与评分标准 <span class="tag">重点</span></h3>
+      <p>总分7分=四科≥27，6.5分≥25，6分≥23。阅读评分关键线：错≤7=7.5分，错≤10=7分，错≤13-14=6.5分。推荐策略：阅读/听力冲7-8分，弥补口语/写作短板。</p>
+      <div class="highlight-box">错超过10个就低于7分，错超过13个就低于6.5分——每一个题都很重要</div>
+    </div>
+    <div class="card">
+      <h3>刷题顺序与策略</h3>
+      <p>提分三要素：语言能力（内功）、方法技巧（招式）、合理计划（策略）。刷题顺序：C13-14入门→C4-8专项→C9-12核心（整套完成）→C15-17考前模拟。正确率优先于速度。</p>
+      <div class="highlight-box">一旦开始做剑桥真题，一定要整套完成，不能今天做一篇明天做一篇</div>
+    </div>
+    <div class="card">
+      <h3>课程安排与作业要求</h3>
+      <p>启航班（6次×1小时+赠课）：词汇→词性→句法→定位→题型，适合基础4-4.5分。飞跃班（5次×2小时+赠课）：定位→填空/判断→选择→匹配→Heading，适合基础5.5-6分。作业需标注日期+截图+标记错题。</p>
+      <div class="highlight-box">有问题的题目一定要做好标记——打问号或写&quot;老师XX题需要讲一讲&quot;</div>
+    </div>
+
+      </section>
+    </main>
+    <aside class="side right">
+      <h3>预习清单</h3>
+      <div style="padding:0 16px">
+        <div class="card" style="padding:14px;margin-bottom:11px">
+          <b style="font-size:13px">我需要知道</b>
+          <div class="check"><input type="checkbox"> 课程整体结构</div>
+          <div class="check"><input type="checkbox"> 老师重点在哪里</div>
+          <div class="check"><input type="checkbox"> 哪些内容需要进视频深学</div>
+        </div>
+        <div class="card" style="padding:14px;margin-bottom:11px">
+          <b style="font-size:13px">老师重点预览</b>
+          <div style="margin-top:10px;padding:13px;border-radius:10px;background:var(--orange-light);border:1px solid var(--orange-border)">
+            <span class="pill">★ 老师敲黑板</span>
+            <p style="margin:9px 0 0;line-height:1.65;font-size:13px">不管纸笔还是机考，60分钟都包含答题和填写答题卡的时间</p>
+          </div>
+          <div style="margin-top:10px;padding:13px;border-radius:10px;background:var(--orange-light);border:1px solid var(--orange-border)">
+            <span class="pill">★ 核心题型</span>
+            <p style="margin:9px 0 0;line-height:1.65;font-size:13px">填空+判断占约20题（总共40题），是必须把握的核心拿分题型</p>
+          </div>
+        </div>
+        <div class="card" style="padding:14px">
+          <b style="font-size:13px">进入网课前</b>
+          <p class="muted small" style="line-height:1.6">预习不是背知识，而是先知道"等会儿要听什么"。</p>
+          <button class="btn primary-blue" style="width:100%;margin-top:10px" onclick="switchPhase('learn')">进入网课 →</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- ===== LEARN PAGE ===== -->
+<div class="page" id="page-learn">
+  <div class="layout">
+    <aside class="side left">
+      <h3>知识节点</h3>
+      <div id="learn-tree">
+      <div class="tree-item" data-start="0" data-end="78"><span class="node-dot"></span>▾ 课程总览</div>
+      <div class="tree-item tree-child" data-start="0" data-end="30"><span class="node-dot"></span>核心框架与目标</div>
+      <div class="tree-item tree-child" data-start="30" data-end="43"><span class="node-dot"></span>适用人群</div>
+      <div class="tree-item tree-child" data-start="43" data-end="78"><span class="node-dot"></span>课程结构</div>
+      <div class="tree-item" data-start="78" data-end="975"><span class="node-dot"></span>▾ 雅思阅读考情介绍</div>
+      <div class="tree-item tree-child" data-start="78" data-end="200"><span class="node-dot"></span>考试基本信息</div>
+      <div class="tree-item tree-child" data-start="200" data-end="495"><span class="node-dot"></span>主要题型</div>
+      <div class="tree-item tree-child" data-start="495" data-end="975"><span class="node-dot"></span>评分标准与目标分数</div>
+      <div class="tree-item" data-start="975" data-end="1340"><span class="node-dot"></span>▾ 复习计划与刷题策略</div>
+      <div class="tree-item tree-child" data-start="975" data-end="1050"><span class="node-dot"></span>提分三大要素</div>
+      <div class="tree-item tree-child" data-start="1050" data-end="1260"><span class="node-dot"></span>刷题顺序（剑桥雅思系列）</div>
+      <div class="tree-item tree-child" data-start="1260" data-end="1320"><span class="node-dot"></span>考试形式选择</div>
+      <div class="tree-item tree-child" data-start="1320" data-end="1340"><span class="node-dot"></span>个性化计划申请</div>
+      <div class="tree-item" data-start="1340" data-end="2020"><span class="node-dot"></span>▾ 课程介绍与作业要求</div>
+      <div class="tree-item tree-child" data-start="1340" data-end="1560"><span class="node-dot"></span>课程内容</div>
+      <div class="tree-item tree-child" data-start="1640" data-end="2020"><span class="node-dot"></span>作业提交要求</div>
+      <div class="tree-item" data-start="2020" data-end="2052"><span class="node-dot"></span>▾ 课后作业</div>
+      <div class="tree-item tree-child" data-start="2020" data-end="2040"><span class="node-dot"></span>基础积累</div>
+      <div class="tree-item tree-child" data-start="2040" data-end="2050"><span class="node-dot"></span>真题练习</div>
+      <div class="tree-item tree-child" data-start="2050" data-end="2052"><span class="node-dot"></span>其他要求</div>
+
+      </div>
+      <h3>我的标记</h3>
+      <div class="tree-item" onclick="seekTo(318)">💭 05:18 为什么 F ≠ NG？</div>
+      <div class="tree-item" onclick="seekTo(1175)">💭 19:35 为什么要整套做真题？</div>
+    </aside>
+    <main class="main">
+      <div class="video">
+        <video id="mainVideo" src="03-input/01-mp4/R_001_录_阅读导学_视频1_阅读导学_003419上次看到_词性的区分及其意义_005716.mp4"></video>
+        <div class="video-controls">
+          <button class="btn" style="background:#26303b;color:#fff;font-size:12px" onclick="togglePlay()" id="playBtn">▶ 播放</button>
+          <div class="bar" onclick="seekBar(event)"><i id="bar" style="width:0%"></i></div>
+          <span class="time-label" id="time">00:00 / 34:12</span>
+          <button class="speed-btn" onclick="cycleSpeed()" id="speed">1×</button>
+          <button class="note-quick-btn" onclick="openNoteModal()">＋ 记录想法</button>
+        </div>
+      </div>
+      <section class="card knowledge-card">
+        <span class="pill">当前知识点</span>
+        <h2 id="ktitle">雅思阅读考情介绍</h2>
+        <p id="kbody">老师正在介绍雅思阅读考试的基本信息，包括考试时间、文章结构和题型分布。</p>
+        <div class="insight">
+          <span class="pill">★ 老师敲黑板</span>
+          <p id="insight">不管纸笔还是机考，60分钟都包含答题和填写答题卡的时间</p>
+          <button class="btn" style="margin-top:10px" onclick="seekTo(0)">▶ 回到老师原话</button>
+        </div>
+        <div class="my-note">
+          <span class="pill">💭 我的思考</span>
+          <p>"先了解考试整体结构，再进入具体题型的学习。"</p>
+          <button class="btn" style="margin-top:9px" onclick="openNoteModal()">编辑我的思考</button>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:8px">
+          <button class="btn ghost" onclick="switchPhase('practice')">📝 去练习</button>
+          <button class="btn ghost" onclick="switchPhase('review')">🔄 去复习</button>
+        </div>
+      </section>
+    </main>
+    <aside class="side right">
+      <div class="transcript-sidebar">
+        <div class="ts-header">
+          <b>老师原文 · 137 段</b>
+          <button class="btn" style="font-size:12px" onclick="toast('已展开完整转录')">展开</button>
+        </div>
+        <div class="transcript-scroll">
+      <div class="transcript-line read" data-start="0.0" data-end="15.780000000000001"><span class="ts">00:00</span>Hello 各位同學大家好歡迎大家來到亞斯閱讀的課程今天這個視頻是一個閱讀的島學視頻</div>
+      <div class="transcript-line read" data-start="15.780000000000001" data-end="34.04"><span class="ts">00:15</span>也就是說希望大家能夠在正式的直播課也好視頻課也好 開始之前我都希望大家能夠先來看一看這個島學視頻課當然我知道有的同學當你在打開視頻的內容之前</div>
+      <div class="transcript-line read" data-start="34.04" data-end="51.36"><span class="ts">00:34</span>你們已經上過了第一次直播課了也沒有關係 你今天來看也不急但是你一定要把它看下去因為在這解課當中我會給大家講到很多關於我們亞斯閱讀包括咱們的課程的一些相關的內容</div>
+      <div class="transcript-line read" data-start="51.36" data-end="70.47999999999999"><span class="ts">00:51</span>那麼具體來說 我們今天這解課我主要講的是三個方面第一個是關於亞斯閱讀的一個基本的考情介紹然後第二個就是會有一個關於學習計畫的一個推薦然後第三個就是咱們的課程的介紹以及相關的一些要求</div>
+      <div class="transcript-line read" data-start="70.47999999999999" data-end="85.64"><span class="ts">01:10</span>包括比如說作業啊或者等等一些相關的要求好 咱們就從第一點開始先來看看亞斯閱讀的基本考情其實也就是亞斯閱讀到底考什麼</div>
+      <div class="transcript-line read" data-start="85.64" data-end="100.56"><span class="ts">01:25</span>首先 我要說一下亞斯閱讀到底考什麼呢我相信在座的各位同學有的是參加過亞斯閱讀考試的有的是完全沒有參加過的甚至有的是連翻開都沒有翻開過的</div>
+      <div class="transcript-line read" data-start="100.56" data-end="115.36"><span class="ts">01:40</span>所以我跟大家講的話講的就是說你們首先一定要盡量的先去翻一翻這個亞斯閱讀的整體也是我們常說的建橋亞洲整體的建四到建石七待會兒我也會跟大家講一講</div>
+      <div class="transcript-line read" data-start="115.36" data-end="130.56"><span class="ts">01:55</span>關於這幾本書的一個作體的一個順序首先我們來講一講亞斯閱讀它的考試時間是一個小時情注意不管是直比考試還是機考都是包含了作體與答案填寫的時間</div>
+      <div class="transcript-line current" data-start="130.56" data-end="146.88"><span class="ts">02:10</span>只是機考的話是一邊作體一邊就填答案了而直比考試的話它是會有答卷和問卷之分的那麼總會有三篇文章每篇文章是40個體大概的話每篇文章就是13到14個體</div>
+      <div class="transcript-line" data-start="146.88" data-end="161.23999999999998"><span class="ts">02:26</span>按照我們常見的一種畫分的方式的話一般來說是第一體到第13體是屬於第一篇文章而第14體到26體是第2篇文章</div>
+      <div class="transcript-line" data-start="161.23999999999998" data-end="176.04"><span class="ts">02:41</span>第27體到第40體是第3篇文章那麼3篇文章的難度一般人也會也是一次的難度會加深當然這個不一定</div>
+      <div class="transcript-line" data-start="176.04" data-end="191.8"><span class="ts">02:56</span>不過基本上來說是第3篇文章是最難的一篇文章是相當於比較簡單的然後文體以一論文和說明文為主不考繼續文那麼南元主要就是一些常見的人文科學雜誌</div>
+      <div class="transcript-line" data-start="191.8" data-end="208.52"><span class="ts">03:11</span>它會注意到文理科的這種平衡會有人文社科的相關的內容也會有一些自然科學理工科的內容其中它的主要提形會有這麼幾個提形當然大家可能會在不同的一些網站</div>
+      <div class="transcript-line" data-start="208.52" data-end="223.52"><span class="ts">03:28</span>或者一些不同的機構會看到這個提形有可能會有不同的分類方式但是大家講分類方式其實無所謂最重要的是什麼呢你只要知道每個提形的具體指的是什麼內容就好了這個是比較重要的</div>
+      <div class="transcript-line" data-start="223.52" data-end="239.96"><span class="ts">03:43</span>而這也是我們上課的一個基本的一個邏輯我們會先從定位和同一替換這一個基礎的知識開始進行然後之後會一次有填空體和判斷體</div>
+      <div class="transcript-line" data-start="239.96" data-end="256.08"><span class="ts">03:59</span>這兩種提形屬於細節體之後又會進入到選擇體封為單選和多選這是一種從細節到紅觀理解的一種過度提形然後會是匹配以及Heading</div>
+      <div class="transcript-line" data-start="256.08" data-end="274.84000000000003"><span class="ts">04:16</span>Lisofia Heading 這兩種紅觀提形那麼他們具體長什麼樣啊比如說填空體當然大家顧名詩就是做填空了你看就是直接填空當然填空體也會有它具體的不同的細分下去的內心</div>
+      <div class="transcript-line" data-start="274.84000000000003" data-end="290.0"><span class="ts">04:34</span>那麼這裡我們就不在這一堂倒學課裡面多講一點因為我們之後會有專門的政課來學習填空體然後判斷體的話呢那麼其實我們大家並不是很陌生</div>
+      <div class="transcript-line" data-start="290.0" data-end="306.0"><span class="ts">04:50</span>因為我們以前在做中學時的時候的英文考試的時候其實就會有判斷體它可能會只是說我們在國內的一些英文考試到中判斷體可能只會有TAF或者是Yes</div>
+      <div class="transcript-line" data-start="306.0" data-end="320.0"><span class="ts">05:06</span>兩個選項那麼亞斯呢它會多一個選項就是NG也就沒有提到Node的基本那麼那些做過亞斯提以及考威亞同學就知道</div>
+      <div class="transcript-line" data-start="320.0" data-end="338.0"><span class="ts">05:20</span>在亞斯當中F和NG的區分是判斷體的一個難點這兩個就是基礎提醒對於我們絕大同學而言你如果想要考到一個亞斯閱讀的高分的話這兩個提醒是你誤必要把握好的提醒</div>
+      <div class="transcript-line" data-start="338.0" data-end="356.0"><span class="ts">05:38</span>然後這就是單選體和多選體其實選擇體我覺得我們不需要花太多時間來講因為大家從小到大都在做單選體單選體和多選體到時候我們進行學習的時候老師就會跟你們講到它是屬於非常非常難的一種提醒</div>
+      <div class="transcript-line" data-start="356.0" data-end="371.0"><span class="ts">05:56</span>然後就是一種大家平常比較少的疲憊體那麼疲憊它也可以具體的去細分那我們今天只是給大家做一個展示就好了比如說它有人民的疲憊讓你根據人民的名字來疲憊一些什麼</div>
+      <div class="transcript-line" data-start="371.0" data-end="387.0"><span class="ts">06:11</span>相關的一些言論什麼人他們說了什麼話或者是他們做了什麼事這是一種疲憊那麼也可以是時間的疲憊那麼在不同的時間可能會發生了不同的一些事件時間和事件的疲憊</div>
+      <div class="transcript-line" data-start="387.0" data-end="401.0"><span class="ts">06:27</span>也可能是地點和相關的一些秒數的疲憊或者是句子的疲憊也被稱之為是完成句子當然還要一種疲憊叫做信息疲憊體</div>
+      <div class="transcript-line" data-start="401.0" data-end="416.0"><span class="ts">06:41</span>那麼如果大家考過46幾的話那你可能會比較有一個提醒是比較類似的就類似的問題下面的哪一段包含下面的這些信息比如說有14到17題就有4個信息</div>
+      <div class="transcript-line" data-start="416.0" data-end="430.0"><span class="ts">06:56</span>那麼文章有A到A不斷有6個斷落那麼分別哪一段包含所對應的信息這個叫信息疲憊體那麼最後一種的理想法heading其實這個選擇標題</div>
+      <div class="transcript-line" data-start="430.0" data-end="445.0"><span class="ts">07:10</span>有個標題配對題其實它的問題的做法很簡單就是選擇一個正確的heading你可以理解為選擇一個正確的小標題用羅馬書字寫的比較特殊給每一個斷落</div>
+      <div class="transcript-line" data-start="445.0" data-end="460.0"><span class="ts">07:25</span>這就是一些主要的我個提醒就是我們說的貧控判斷選擇疲憊和heading當然他們內部又會再去的細分有一些更加細節的一些變化</div>
+      <div class="transcript-line" data-start="460.0" data-end="474.0"><span class="ts">07:40</span>當然有同學說老師我好像還曾經做到過簡單題簡單題是最近這些年出現的非常少的一種提醒但是由於簡單題的方法和這個</div>
+      <div class="transcript-line" data-start="474.0" data-end="488.0"><span class="ts">07:54</span>貼控題是非常非常接近的所以我們這會不會特意的端讀把它拿出來講因為你只要會做簡單題因為他們的方法是非常接近的這是一個表的提醒</div>
+      <div class="transcript-line" data-start="488.0" data-end="502.0"><span class="ts">08:08</span>那麼還有一個非常非常關鍵的內容就是關於大家的目標分數和一個希望的閱讀分數那麼我們首先現在來講這麼一件事情就是</div>
+      <div class="transcript-line" data-start="502.0" data-end="516.0"><span class="ts">08:22</span>對於絕大多數同學而言你們會發現你們想要考的這個大多數學想要考的目標分數都是你這麼三個分數為主7分6.5分</div>
+      <div class="transcript-line" data-start="516.0" data-end="530.0"><span class="ts">08:36</span>和6分這三個分數為主那麼我這裡面就特別給大家講一講這三個分數分別意味著你的聽說讀寫要考到多少分呢</div>
+      <div class="transcript-line" data-start="530.0" data-end="544.0"><span class="ts">08:50</span>請注意7分意味著你的聽說讀寫最少要達到27分6.5分意味著你的聽說讀寫加起來最少要是25分</div>
+      <div class="transcript-line" data-start="544.0" data-end="559.0"><span class="ts">09:04</span>那麼6分的話就是23分至於你是如何組成這27分的其實是沒有相關的要求的當然這個地方就會涉及到大家所要申請的學校或者是專業</div>
+      <div class="transcript-line" data-start="559.0" data-end="574.0"><span class="ts">09:19</span>有沒有向大家提出小分要求比如說單顆不能低於多少分或者是比如說寫座或者是口語不能低於多少分那麼這個就是大家有各自的不同的要求</div>
+      <div class="transcript-line" data-start="574.0" data-end="592.0"><span class="ts">09:34</span>我只是告訴大家在不考慮小分的情況下面你只要聽說讀寫加起來是27分的話你們就一定能夠得到了總分是7分那麼其實組成7分最簡單的分數組合呢</div>
+      <div class="transcript-line" data-start="592.0" data-end="608.0"><span class="ts">09:52</span>不是每一門都上7分而是你會發現你只要考到2分7分2分6.5分的話你的總分就會是7分了那麼這邊6.5分的話就是你只需要考到2分6.5</div>
+      <div class="transcript-line" data-start="608.0" data-end="622.0"><span class="ts">10:08</span>2分6分就行了6分的話可能是2分6分2分5.5就行了當然這個地方大家一定要結合自己的這個小分要求比如說有的有的同學</div>
+      <div class="transcript-line" data-start="622.0" data-end="639.0"><span class="ts">10:22</span>小分要求不低於6.5分總分要求7分以上那麼對你來說這個是一個最低標準對吧但是有的同學你是小分要求不低於6分總分7分以上那麼其實你考成這個樣子就是完美的達標了</div>
+      <div class="transcript-line" data-start="639.0" data-end="653.0"><span class="ts">10:39</span>甚至你如果某一門比如說你的小分有一門你只達了6分那麼你只需要在這邊任意一門當中比如說這裡考一個7.5那麼你會發現你最終加起來還是構成了27分以上</div>
+      <div class="transcript-line" data-start="653.0" data-end="671.0"><span class="ts">10:53</span>你就還是會達到7分的標準而且並且小分一樣是達標的所以這個地方大家一定要自己要心理心理要有數那麼這有什麼作用呢我們一般會認為對於我們一個參加考試的同學而言</div>
+      <div class="transcript-line" data-start="671.0" data-end="686.0"><span class="ts">11:11</span>尤其是中國的考生而言我們會在讀和聽當中聽讀這兩門科目當中我們獲得的高分的這個可能性已經提分的這個難度</div>
+      <div class="transcript-line" data-start="686.0" data-end="701.0"><span class="ts">11:26</span>相當來說會比較低一點就是更容易考到高分而在說以及寫這兩門科目上面它的難度會比較大一點比如說我們在考試被考得過程中呢</div>
+      <div class="transcript-line" data-start="701.0" data-end="716.0"><span class="ts">11:41</span>哪一兩門要考得上的高一點呢其實我們一般而言都是閱讀和聽力的分數考得高一點所以你如果想要你自己想要考到你的7分你如果想要你的總分達到7分</div>
+      <div class="transcript-line" data-start="716.0" data-end="730.0"><span class="ts">11:56</span>這個事情更加有保險的話其實你的閱讀分數最好是7分以上比如說7.5分甚至8分以上這樣可以幫助你在其他的科目贏得更多的空間</div>
+      <div class="transcript-line" data-start="730.0" data-end="745.0"><span class="ts">12:10</span>我看這個道德在那邊都沒辦法明白然後那麼具體來說到閱讀這一門科目我們的這個評分標準到底是什麼樣子呢大家看一看關於閱讀的一個評分標準</div>
+      <div class="transcript-line" data-start="745.0" data-end="762.0"><span class="ts">12:25</span>那我們把這個給判掉我們大家記住這兩條線就行了首先大家一定要記住這樣一個數字就是10什麼意思就是你只要錯了超過10個</div>
+      <div class="transcript-line" data-start="762.0" data-end="779.0"><span class="ts">12:42</span>你的分數就會低於7分你只要在10個以內你的總分就是7分以上那麼6.5分的分界點多少呢請大家注意啊你不能錯超過13個</div>
+      <div class="transcript-line" data-start="779.0" data-end="793.0"><span class="ts">12:59</span>當然偶爾可能會有14個大家在這個裡會有一定的波動就是說你錯了超過13或者14個你的分數就會低於6.5分你如果錯了超過7個</div>
+      <div class="transcript-line" data-start="793.0" data-end="808.0"><span class="ts">13:13</span>你的閱讀分數就會低於7.5分大家會發現其實越往上你有的時候多對一個就會完全讓你的分數有一個大的跨度比如說其實7分和6.5分</div>
+      <div class="transcript-line" data-start="808.0" data-end="824.0"><span class="ts">13:28</span>最小的差距有可能就是一個體的差距人生可能多對一個體能夠上一個台階所以大家知道做閱讀的過程中間就告訴我們每一個體都很重要其中又以甜空體和判斷體有為重要</div>
+      <div class="transcript-line" data-start="824.0" data-end="840.0"><span class="ts">13:44</span>因為甜空體和判斷體會佔據20個左右的閱讀的體穩的數量總共就40個體甜空和判斷佔了20個左右那麼你如果能夠把這一半都拿到的話你就會有一個6分到6.5分</div>
+      <div class="transcript-line" data-start="840.0" data-end="856.0"><span class="ts">14:00</span>5.5分到6分的一個基礎然後剩下的你只要不爭取能夠做的你每多對那麼2、3個你的分數就會有一個大的一個台階的上面的跨越大家一定要搞清楚這一點所以比如說我本人</div>
+      <div class="transcript-line" data-start="856.0" data-end="873.0"><span class="ts">14:16</span>我本人是閱讀和寫作兩盟科目的主角老師當然在咱們的班克過程中我主要是在教大家的閱讀所以我就會告訴大家你們一定要保證閱讀和聽力這兩盟科目</div>
+      <div class="transcript-line" data-start="873.0" data-end="888.0"><span class="ts">14:33</span>你們每天都有在練習但是你們可能需要花更多的時間花在寫作和口語上其他注意這兩句話並不矛盾因為閱讀和聽力的提分的難度比較小</div>
+      <div class="transcript-line" data-start="888.0" data-end="906.0"><span class="ts">14:48</span>我們也更加容易幫助我們去提分所以你們肯定要重視它但是由於它相當於難度比較小不好意思所以其實你們只要保證每天有一定量的練習就夠了</div>
+      <div class="transcript-line" data-start="906.0" data-end="921.0"><span class="ts">15:06</span>然後由於寫作和口語比較難尤其是那些有小分邀程同學那麼你為了保證你的小分能夠達標你可能會發現你會花很多時間花在寫作和口語上我覺得這兩盟是你並不衝突</div>
+      <div class="transcript-line" data-start="921.0" data-end="935.0"><span class="ts">15:21</span>花時間花得多不代表這我就一定是更加重視它知道吧我更加重視它不代表我就一定要花最多的時間因為它本身就不需要你花那麼多時間比如說閱讀考試一個小時做完四十個題</div>
+      <div class="transcript-line" data-start="935.0" data-end="949.0"><span class="ts">15:35</span>那麼你每天練一套題就是一個小時的時間當然你可能一開始一個小時做不完所有的題目那麼你可以一個半小時兩個小時去做一套題可是你可能做一次寫一次作文</div>
+      <div class="transcript-line" data-start="949.0" data-end="963.0"><span class="ts">15:49</span>你很容易就要寫一個下午一整個下午的時間去寫一篇作文都有可能剛開始的時間所以我覺得這兩件事情並不矛盾好的好那我們現在講到第二部分也就是亞斯的這個複習計畫提分的策略以及如何刷題</div>
+      <div class="transcript-line" data-start="963.0" data-end="977.0"><span class="ts">16:03</span>那麼現在要注意提分的話主要呢就是來自於這三個一個是語言能力我把它稱之為你的內工方法技巧把稱之為你的招式</div>
+      <div class="transcript-line" data-start="977.0" data-end="992.0"><span class="ts">16:17</span>然後你的合理計畫就是你的策略大家想想你如果要參加一場五零大會你是不是你的內工基礎是最重要的因為比如說它包括了你的辭合量長難覺得理解以及同意替換</div>
+      <div class="transcript-line" data-start="992.0" data-end="1007.0"><span class="ts">16:32</span>這些知識而這些都會考驗大家自己的積累比如說大家應該都能夠理解在課堂上面老師雖然能夠教你一些被詞或者方法能夠教你一些同意替換</div>
+      <div class="transcript-line" data-start="1007.0" data-end="1024.0"><span class="ts">16:47</span>但是更多的是需要大家怎麼樣要自己去下功夫知道嗎自己下功夫當然這裡我們其中有意比如說大家如果是這個起航班的班級的同學</div>
+      <div class="transcript-line" data-start="1024.0" data-end="1038.0"><span class="ts">17:04</span>那麼咱們班呢就會在這個長難距的理解就是包括詞和語法的這兩個角度我們會在前期對這兩個進行一個基礎的一個學習</div>
+      <div class="transcript-line" data-start="1038.0" data-end="1053.0"><span class="ts">17:18</span>那麼如果是非越班的同學那麼這原能力這一塊就必須要靠大家自己的下功夫了我們上課會專注在方法和技巧上面包括定位的技巧以及各個體型的解體技巧</div>
+      <div class="transcript-line" data-start="1053.0" data-end="1067.0"><span class="ts">17:33</span>還有一個平行業度法在有這個技巧上面我們再講一個複習的計畫待會兒我會給大家講一個抽象的一個適合所有的一個複習計畫那麼我相信每個人都會有自己</div>
+      <div class="transcript-line" data-start="1067.0" data-end="1082.0"><span class="ts">17:47</span>個人的一些被考的時間安排一些一些具體的一個學習情況所以如果大家想要知道個人的屬於你們自己的一個比較詳細的複習計畫的話大家可以在課後</div>
+      <div class="transcript-line" data-start="1082.0" data-end="1097.0"><span class="ts">18:02</span>可以聯繫我可以大家可以在微信群裡面都可以加到我的好友可以課後聯繫然後我們可以溝通一下相關的一些情況然後我們就可以簡單的去聊一聊</div>
+      <div class="transcript-line" data-start="1097.0" data-end="1111.0"><span class="ts">18:17</span>應該要怎樣去安排你的複習好那麼現在講的就是關於這個刷體順序也是一個整體的一個複習計畫大家可以按照這樣一個刷體順序區完成這個相關的一些</div>
+      <div class="transcript-line" data-start="1111.0" data-end="1126.0"><span class="ts">18:31</span>建築到建築式的練習比如說大家首先可以去做建築是它的建築式因為它的平均難度最接近考試難度年代的也比較近適合你們這些新手小白去做體練手尤其是那些老師我現在不知道我的基礎是什麼樣子的</div>
+      <div class="transcript-line" data-start="1126.0" data-end="1142.0"><span class="ts">18:46</span>那麼像這種同學你叫最好就是去做一套整體從這個你們選擇一套整體來做感受一下製造自己的基礎是什麼樣子的地才好安排你的複習計畫那麼建築到建築可以做一種過度</div>
+      <div class="transcript-line" data-start="1142.0" data-end="1158.0"><span class="ts">19:02</span>因為整體來說它的年代比較久最後初體的思路有的時候會略微有點過時導致它的難度起伏不低那麼呢我們可以用來把它做專項練習比如說我的甜目的不是很好</div>
+      <div class="transcript-line" data-start="1158.0" data-end="1173.0"><span class="ts">19:18</span>那麼我們可以把建築到建築在裡面所有的甜目的都做了做這種專體訓練包括判斷體也是單選體也是哪個體型不行你會盯著建築到建築在裡面的某一個體型去做那麼建築到建築就是最重要的部分</div>
+      <div class="transcript-line" data-start="1173.0" data-end="1188.0"><span class="ts">19:33</span>它是雅思閱讀的一個精華部分適合你們作為刷體練習當然你們最好是在學完一些解體幾場之後並且你要有一個大量的時間就是說你們一旦開始做建築到建築</div>
+      <div class="transcript-line" data-start="1188.0" data-end="1203.0"><span class="ts">19:48</span>到建築你們就不能夠說我今天只做一期鐘一篇或者我今天做直到明天做直到今天做一篇不行你們一旦開始在做建築到建築到的話你們就一定要保證自己是整套完成</div>
+      <div class="transcript-line" data-start="1203.0" data-end="1218.0"><span class="ts">20:03</span>一定要去整套完成時間不一定剛開始可能一個小時做不完沒關係剛開始先不要考慮時間大家一定記住就是說正確率的重要性</div>
+      <div class="transcript-line" data-start="1218.0" data-end="1234.0"><span class="ts">20:18</span>是大於速度的大家一定是要先保證你的正確率再去慢慢的提速因為提速是有方法的然後建築五到建築七它是最新的三本所以比較符合當下的一個初提的思路和潮流</div>
+      <div class="transcript-line" data-start="1234.0" data-end="1248.0"><span class="ts">20:34</span>它就很適合你再做於考前模擬比如考前面一到兩周的時候你可以去做建築五到建築七沒必要全做就可以挑著幾場去做而且平時我們喝糖的很多作業</div>
+      <div class="transcript-line" data-start="1248.0" data-end="1263.0"><span class="ts">20:48</span>也是會從建築五到建築七裡面選的所以很多時候你們做作業的時候就已經完成了一些相關的一些題目了這是一個初提的順序不過這是一個整體的大家記得如果你想要知道屬於你自己個人細節的話</div>
+      <div class="transcript-line" data-start="1263.0" data-end="1277.0"><span class="ts">21:03</span>你一定要跟我聯繫然後把你的一些具體的情況告訴我我才能夠針對你的情況給你一些相關的一些建議然後關於一個直筆和機構的話其實我對於這個地方</div>
+      <div class="transcript-line" data-start="1277.0" data-end="1291.0"><span class="ts">21:17</span>大家並沒有什麼一定說等一個更好我只有一個要求就是無論你選擇何種考試方式你一旦決定了那麼你平時刷題的時候就用相應的方式去刷作題</div>
+      <div class="transcript-line" data-start="1291.0" data-end="1305.0"><span class="ts">21:31</span>你要是想做直筆考試那麼你就不要再在電腦上面做題了請你就去買直至的沒辦法因為你只有真正用直至的去做題的感覺和你在哪怕是PDF</div>
+      <div class="transcript-line" data-start="1305.0" data-end="1319.0"><span class="ts">21:45</span>或者拿著一個APP的上面哪一支比在上面對把哪一個屏幕的比在上面圖圖畫畫的感覺都不一樣如果你決定好的你是機構的話那麼你就一定去在機構的模擬系統上面</div>
+      <div class="transcript-line" data-start="1319.0" data-end="1333.0"><span class="ts">21:59</span>大家在擺著上面一搜都搜得到跟在擺著上面搜亞斯機構模擬系統大家都能夠搜得到在這個上面去做題好那麼最後一個就是關於咱們的課程介紹及一些相關的一些要求</div>
+      <div class="transcript-line" data-start="1333.0" data-end="1347.0"><span class="ts">22:13</span>其中包括課程大綱移之類的基礎以及如何教作業如何提問這些細節的問題首先咱們的班型的主要風格兩個班一個叫做啟航班一個叫做非樂班大家可以簡單的看一看</div>
+      <div class="transcript-line" data-start="1347.0" data-end="1361.0"><span class="ts">22:27</span>咱們啟航班不算這些島學校大概島學校的那種都是一樣的咱們可以看看總共會有1 2 3 4 5 6 6次直播每次時間是一個小時然後呢</div>
+      <div class="transcript-line" data-start="1361.0" data-end="1375.0"><span class="ts">22:41</span>這幾個視頻課有1 2 3 4 5 6 7算上這幾個有8節但是其實只有本來是只有這個6節視頻課的當然我說是越多部分</div>
+      <div class="transcript-line" data-start="1375.0" data-end="1391.0"><span class="ts">22:55</span>但是我給大家加了2節視頻課等於說是我們免費的也就是說是額外附送的包括這節島學課以外還附送了一節那麼具體的內容大家可以看得到我們會先從這個詞繪開始</div>
+      <div class="transcript-line" data-start="1391.0" data-end="1405.0"><span class="ts">23:11</span>到詞繪然後到巨繪然後到語態等於說這些部分就是我們的語法部分咱們先會就大家的言能力這個部分這個基礎的部分</div>
+      <div class="transcript-line" data-start="1405.0" data-end="1420.0"><span class="ts">23:25</span>進行一個公務然後咱們就會進入到閱讀的部分那麼會從定位開始那填空體判斷體還有這個選擇體以及這個匹配體會把所有的聽都講一遍</div>
+      <div class="transcript-line" data-start="1420.0" data-end="1434.0"><span class="ts">23:40</span>然後這邊我們看會從詞繪詞性簡單具的巨型巨子為什麼會變長長難巨特殊巨型被動語態這些亞斯相關的語法進行一個講解當然我們這個地方由於是課程時間有限</div>
+      <div class="transcript-line" data-start="1434.0" data-end="1450.0"><span class="ts">23:54</span>以及我們只是為了學亞斯所以這個亞斯語法咱們肯定不會像高中階段一樣學得那麼那麼詳細問你一個單選擇這個地方要用Dat還是用Weach他們不是這麼去選咱們學的是語法在亞斯當中的運用</div>
+      <div class="transcript-line" data-start="1450.0" data-end="1464.0"><span class="ts">24:10</span>這是啟航班那麼如果是非越班上同學的話你們可以看到你們的第一課我們看的直播課的第一課就直接從定位開始我們會重點就會直接放在所有提醒的技巧首先定位填空體判斷體</div>
+      <div class="transcript-line" data-start="1464.0" data-end="1479.0"><span class="ts">24:24</span>摘要填空體選擇體然後呢會有你看會有這個平行閱讀法的一個講解然後會有關系匹配信息匹配Lisfer Harding要去分享結塊以及最後一節課那麼這個</div>
+      <div class="transcript-line" data-start="1479.0" data-end="1496.0"><span class="ts">24:39</span>非越班的話你們會它會有五次直播課每次是兩個小時然後呢也會有五次試評課每次是一個小時不過呢我還是副送了你們兩節試評課然後大家</div>
+      <div class="transcript-line" data-start="1496.0" data-end="1510.0"><span class="ts">24:56</span>這裡有一個很重要的時間跟大家講就是咱們每一個班的這個定位的這個基礎是不一樣的一般來說啟航滿所對應的同學是那些亞斯小白就英語基礎相對來說比較薄弱的同學</div>
+      <div class="transcript-line" data-start="1510.0" data-end="1524.0"><span class="ts">25:10</span>就是說那亞斯基礎可能只有4.5分或者是4分深略的目標是這裡很重要啊目標是6分到5.5或者是6分當然我肯這裡有同學的老師</div>
+      <div class="transcript-line" data-start="1524.0" data-end="1539.0"><span class="ts">25:24</span>我的目標是6.5分但是有同學你雖然你的目標是6.5分但是你的基礎可能只有4.5分或者是4分那麼你可能就得先從這個班開始先定一個階段性的目標</div>
+      <div class="transcript-line" data-start="1539.0" data-end="1553.0"><span class="ts">25:39</span>6分和5.5分先達到這個階段性的目標然後再去往上面去跨越知道吧所以大家就一定要搞清楚這個一點然後呢非越半的話一般這個基礎可能是5.5分</div>
+      <div class="transcript-line" data-start="1553.0" data-end="1568.0"><span class="ts">25:53</span>到6分的基礎想要考到6.5分只7分以上的同學可能就真的是這樣的基礎的同學出來一定要搞清楚想清楚你自己的基礎是什麼樣子的因為我之前遇到過的同學</div>
+      <div class="transcript-line" data-start="1568.0" data-end="1582.0"><span class="ts">26:08</span>它的基礎特別好特別特別好它才來上了這個班然後大家發現前面這些那種東西還說都是太簡單了它都會那麼我就推薦它去轉班轉到了另外一個這個這個這個</div>
+      <div class="transcript-line" data-start="1582.0" data-end="1598.0"><span class="ts">26:22</span>高 更高級的班但是也有遇到各種同學它的基礎其實是非常非常的薄弱它只是遥遇它的這個被考時間有限它只有一個月的時間使它選擇了這個班因為這個班的時間大概就是一個月就在上完這個大概需要兩個月的多月的時間</div>
+      <div class="transcript-line" data-start="1598.0" data-end="1613.0"><span class="ts">26:38</span>因為它是按步就班一步一步來的然後它是遥遇被考時間有限它所以才學得這個非越班那它其實它的基礎非常的薄弱所以它會發現得更不上因為它會發現它連這個基本的這個磁盒量</div>
+      <div class="transcript-line" data-start="1613.0" data-end="1627.0"><span class="ts">26:53</span>以及這個遇法只是它都沒有它完全看不懂那合談技巧這一說的對不對所以大家一定要根據自己的情況來選了自己最合適的這個班行以及</div>
+      <div class="transcript-line" data-start="1627.0" data-end="1641.0"><span class="ts">27:07</span>如果你不知道自己到底是什麼水平的話那麼你就在這裡選一套來做一做通過做整體來判斷自己到底是什麼水平然後最後一個點就是關於這個</div>
+      <div class="transcript-line" data-start="1641.0" data-end="1656.0"><span class="ts">27:21</span>提交作業的一些格式和注意事項了就是大家在提交作業的時候一定要寫上科目和時間比如說寫上3月31日閱讀作業那麼請你在提交的時候不要只是把答案告訴我</div>
+      <div class="transcript-line" data-start="1656.0" data-end="1670.0"><span class="ts">27:36</span>請你把那個那個頁面就是你作體的那個頁面截圖或者是拍照一起發展感然後請你注意這一點很重要有問題的題目你一定要做好標記我們我並不會每一個錯題都會講解</div>
+      <div class="transcript-line" data-start="1670.0" data-end="1685.0"><span class="ts">27:50</span>因為有的同學是這樣子的你做錯這個題目但是可能你自己能夠把人弄懂那我們就沒有必要去講所以大家自己做完題目之後首先要一個自己的一個反思和總結的過程然後呢這個反思完之後呢</div>
+      <div class="transcript-line" data-start="1685.0" data-end="1700.0"><span class="ts">28:05</span>你可以告訴我老師這個題目我不會你可以打問號你也可以在那邊打字寫上一句話老師21題需要講一講告訴我然後呢高於提交作業的時間這點很拜託大家不要盡早的提交</div>
+      <div class="transcript-line" data-start="1700.0" data-end="1716.0"><span class="ts">28:20</span>不要太早提交請你們同意的在下一次直播課的前一天比如說假設下一次直播課是4月6號假設是4月6號大家在4月5日這一天開始提交</div>
+      <div class="transcript-line" data-start="1716.0" data-end="1731.0"><span class="ts">28:36</span>就可以了為什麼這樣子呢因為你提交到太早其實我是我是不能夠去改的因為我一旦改了你的把你的一些錯誤把你的一些疑問講出來之後有的同學他可能還沒有做但他可能就看到了這個思路了</div>
+      <div class="transcript-line" data-start="1731.0" data-end="1745.0"><span class="ts">28:51</span>那麼就會影響他自己去做題等於說我提前告訴他答案了或者我提前告訴他一些思路了就會影響他的做題所以呢我就會給大家統一的發在這個這個這個考這個直播課的前一天</div>
+      <div class="transcript-line" data-start="1745.0" data-end="1759.0"><span class="ts">29:05</span>當然也同學會說老師我先發出來你可以先不看嘛但是你們想一想你們會在那個群裡面要講很多話對不對如果你如果你比如說比如說你3月31號的作業你在4月1號就做完了</div>
+      <div class="transcript-line" data-start="1759.0" data-end="1773.0"><span class="ts">29:19</span>你把它發上來了那麼我等到4月5號我去改的時候我就要連翻3天4天的聊天基督這個會很麻煩我可能會容易漏掉所以就拜託各位這你可以提前做完但是你只要選擇在這個4月5</div>
+      <div class="transcript-line" data-start="1773.0" data-end="1789.0"><span class="ts">29:33</span>這個直播課的前一天把它發上來了就行了感謝大家然後呢這就能我給大家看幾個這個提交做的一些可以大家可以去參考的一些示範我們可以給大家看一看</div>
+      <div class="transcript-line" data-start="1789.0" data-end="1803.0"><span class="ts">29:49</span>那麼比如說我們可以看一下大家的這個提交作業的方式你看最同學他們在提交作業的時候他們都會寫上這個3月23號的閱讀作業然後他們就會交上來然後呢</div>
+      <div class="transcript-line" data-start="1803.0" data-end="1817.0"><span class="ts">30:03</span>他們交上來以後他們就會把他們這個問題會著名好的問題是什麼然後呢我們就會進行一個在群裡面我就會進行一個講解然後把他換的問題進行一個講解然後呢你看大家看看</div>
+      <div class="transcript-line" data-start="1817.0" data-end="1831.0"><span class="ts">30:17</span>他們在提交的時候比如說這個同學你看他是直比考試對不對你看他就會把整個過程拍照讓我知道他做這個題目的這個過程以及他會比如說29天在這裡30天在這裡</div>
+      <div class="transcript-line" data-start="1831.0" data-end="1846.0"><span class="ts">30:31</span>他就會做一些標記我就可以看到他的這個思考了這樣的一個過程大家請注意你看他如果某個題目有問題的話你看這個題目做錯了對不對但他沒有做特別的標記對吧但是</div>
+      <div class="transcript-line" data-start="1846.0" data-end="1860.0"><span class="ts">30:46</span>他就會在這個地方寫上去29題的地和31題不明白他就會告訴我這個題目他是有他是有問題的那麼我就會在過程中內我就會去講這個地方知道吧你看第15題的必須上他有問題</div>
+      <div class="transcript-line" data-start="1860.0" data-end="1875.0"><span class="ts">31:00</span>那麼呢我也會給他我就會去講這個問題是什麼然後包括有同學呢他可能是這個機考的這個他可能是用這個他可能是用這個ipad做的那麼你看</div>
+      <div class="transcript-line" data-start="1875.0" data-end="1889.0"><span class="ts">31:15</span>他自己錯了很多大家會告訴我他就會告訴我29到3029到32題這幾個題目他覺得他有你看不懂他需要去講解他就會說出來包括有同學是你看也有這種直逼考試的</div>
+      <div class="transcript-line" data-start="1889.0" data-end="1903.0"><span class="ts">31:29</span>你看打一個問號也行我知道你32題有問題但是你看29題他也做錯了但是他沒有打問號就說明什麼呢他自己看懂了他明白了然後我就會去講他的這個32題就是這樣子的</div>
+      <div class="transcript-line" data-start="1903.0" data-end="1918.0"><span class="ts">31:43</span>大家提交做的這個格式這個方式是什麼你看每個同學都會寫上比如說是寫做作業這個是聽力作業這個什麼東西他就會寫得很清楚然後他只要寫完之後呢我們老師呢就會在這個群裡面給大家做一個講解</div>
+      <div class="transcript-line" data-start="1918.0" data-end="1932.0"><span class="ts">31:58</span>包括你看這邊都是有這個他們都在提交這個上課的這個過程提交的這些作業你看這些同學都沒有提交得很多啊然後你看就是這是一個</div>
+      <div class="transcript-line" data-start="1932.0" data-end="1946.0"><span class="ts">32:12</span>老師的講解然後可能這邊又是我的一個講解然後你們看你們錯不在什麼我還得就會引用一下OK然後你看他的這個作業可能他會說你看他會把他這個</div>
+      <div class="transcript-line" data-start="1946.0" data-end="1960.0"><span class="ts">32:26</span>講作品的這個過程這個思考的這個過程他會有一個反思他會自己有一個反思總結沒講錢一句考慮在內對吧他就會反思我覺得我都是想看到的看到大家這個過程</div>
+      <div class="transcript-line" data-start="1960.0" data-end="1974.0"><span class="ts">32:40</span>你才會知道自己有怎麼怎麼去進步以及我會知道你的這個反思過程中也有沒有遇到什麼問題然後呢大家去做筆記的時候也會有一些比較推薦的筆記你看有同學做筆記</div>
+      <div class="transcript-line" data-start="1974.0" data-end="1988.0"><span class="ts">32:54</span>他比較喜歡熟寫那麼他可能就會發一個筆記上來他的整個這個手寫就是去聽回放之後做一些熟寫的筆記的這個過程會有一個回放我們這有課程回放的但是有的同學呢</div>
+      <div class="transcript-line" data-start="1988.0" data-end="2004.0"><span class="ts">33:08</span>他可能不太喜歡熟寫還有什麼還有那是這個他們的這個這個報網路這個手機報網路的上面他通過一些在看視頻的時候的一些截圖整理了一些筆記</div>
+      <div class="transcript-line" data-start="2004.0" data-end="2018.0"><span class="ts">33:24</span>你看這樣也可以讓我看得到他的這個他的寫的東西如果我在這個筆記上我發現一些問題我還會我還會跟他講你這個筆記模式你可以稍微補充一下或者修改一下知道吧</div>
+      <div class="transcript-line" data-start="2018.0" data-end="2032.0"><span class="ts">33:38</span>OK這就是我們的這個剛剛相關於做一個要求然後這就是我們關於導學視頻的一個全部內容然後呢希望那兩樣能夠在我們的這個學習的</div>
+      <div class="transcript-line" data-start="2032.0" data-end="2046.0"><span class="ts">33:52</span>這個過程中能夠有問題的話咱們能夠即時的交流不管是什麼問題也好咱們都能夠即時交流然後期待不管是你已經上了第一次直播還是沒有上第一次直播</div>
+      <div class="transcript-line" data-start="2046.0" data-end="2052.0"><span class="ts">34:06</span>會好我們期待在未來的一段時間裡面我們都能夠有所收穫好吧那就感謝大家</div>
+
+        </div>
+      </div>
+      <div class="rail">
+        <div class="railtitle">
+          <b style="font-size:14px">课程知识时间轴</b>
+          <span class="pill">边看边记</span>
+        </div>
+        <div class="notequick">
+          <b style="font-size:13px">此刻发生了什么？</b>
+          <p class="muted small">视频正在讲一个知识点。你的笔记会自动绑定当前时间，并在课后归入对应节点。</p>
+          <button class="btn primary-blue" style="width:100%;margin-top:10px" onclick="openNoteModal()">＋ 记录此刻想法</button>
+        </div>
+        <div class="timeline">
+          <div class="event" onclick="seekTo(0)">
+            <span class="dot"></span>
+            <b>00:00 课程导入</b>
+            <p>导学视频目的：考情+计划+课程要求</p>
+          </div>
+          <div class="event" onclick="seekTo(78)">
+            <span class="dot"></span>
+            <b>01:18 考情：考试基本信息</b>
+            <p>60分钟/3篇40题/纸笔vs机考</p>
+          </div>
+          <div class="event" onclick="seekTo(170)">
+            <span class="dot"></span>
+            <b>02:50 难度与文体</b>
+            <p>难度递增/议论文+说明文/文理平衡</p>
+          </div>
+          <div class="event" onclick="seekTo(200)">
+            <span class="dot"></span>
+            <b>03:20 题型总览</b>
+            <p>课程逻辑：基础→细节→过渡→宏观</p>
+          </div>
+          <div class="event" onclick="seekTo(250)">
+            <span class="dot"></span>
+            <b>04:10 填空题</b>
+            <p>细节题，有细分类型，后续专课学习</p>
+          </div>
+          <div class="event highlight" onclick="seekTo(280)">
+            <span class="dot"></span>
+            <b>04:40 判断题 T/F/NG</b>
+            <p>★ False vs Not Given 是难点</p>
+          </div>
+          <div class="event" onclick="seekTo(350)">
+            <span class="dot"></span>
+            <b>05:50 选择题</b>
+            <p>单选/多选，实际非常难</p>
+          </div>
+          <div class="event" onclick="seekTo(380)">
+            <span class="dot"></span>
+            <b>06:20 匹配题</b>
+            <p>人名/时间/地点/句子/信息匹配</p>
+          </div>
+          <div class="event" onclick="seekTo(440)">
+            <span class="dot"></span>
+            <b>07:20 Heading题+简单题</b>
+            <p>标题配对；简单题方法接近填空</p>
+          </div>
+          <div class="event" onclick="seekTo(495)">
+            <span class="dot"></span>
+            <b>08:15 目标分数</b>
+            <p>7分≥27 / 6.5≥25 / 6≥23</p>
+          </div>
+          <div class="event" onclick="seekTo(570)">
+            <span class="dot"></span>
+            <b>09:30 小分要求与组合</b>
+            <p>分数组合方式+学校小分要求</p>
+          </div>
+          <div class="event highlight" onclick="seekTo(620)">
+            <span class="dot"></span>
+            <b>10:20 考生优劣势</b>
+            <p>★ 阅读/听力冲7-8分弥补说写</p>
+          </div>
+          <div class="event highlight" onclick="seekTo(690)">
+            <span class="dot"></span>
+            <b>11:30 ★ 评分标准</b>
+            <p>错≤10=7分 / 错≤13=6.5分</p>
+          </div>
+          <div class="event highlight" onclick="seekTo(810)">
+            <span class="dot"></span>
+            <b>13:30 ★ 填空+判断=核心</b>
+            <p>占20题/40题，是拿分基础</p>
+          </div>
+          <div class="event" onclick="seekTo(900)">
+            <span class="dot"></span>
+            <b>15:00 每天练阅读听力</b>
+            <p>提分难度小，保证每天一定量</p>
+          </div>
+          <div class="event" onclick="seekTo(975)">
+            <span class="dot"></span>
+            <b>16:15 提分三要素</b>
+            <p>内功·招式·策略</p>
+          </div>
+          <div class="event" onclick="seekTo(1095)">
+            <span class="dot"></span>
+            <b>18:15 刷题顺序</b>
+            <p>C13入门→C4专项→C9核心→C15模拟</p>
+          </div>
+          <div class="event highlight" onclick="seekTo(1160)">
+            <span class="dot"></span>
+            <b>19:20 ★ 整套完成</b>
+            <p>正确率>速度，不能今天一篇明天一篇</p>
+          </div>
+          <div class="event" onclick="seekTo(1260)">
+            <span class="dot"></span>
+            <b>21:00 考试形式选择</b>
+            <p>选定后刷题方式保持一致</p>
+          </div>
+          <div class="event" onclick="seekTo(1340)">
+            <span class="dot"></span>
+            <b>22:20 启航班大纲</b>
+            <p>词汇→词性→句法→定位→题型</p>
+          </div>
+          <div class="event" onclick="seekTo(1430)">
+            <span class="dot"></span>
+            <b>23:50 飞跃班大纲</b>
+            <p>定位→填空/判断→选择→匹配→Heading</p>
+          </div>
+          <div class="event highlight" onclick="seekTo(1500)">
+            <span class="dot"></span>
+            <b>25:00 班型选择</b>
+            <p>★ 基础4-4.5启航/5.5-6飞跃</p>
+          </div>
+          <div class="event" onclick="seekTo(1640)">
+            <span class="dot"></span>
+            <b>27:20 作业格式要求</b>
+            <p>日期+科目+截图+标记错题</p>
+          </div>
+          <div class="event highlight" onclick="seekTo(1750)">
+            <span class="dot"></span>
+            <b>29:10 ★ 提交时间</b>
+            <p>统一在下次直播课前一天提交</p>
+          </div>
+          <div class="event" onclick="seekTo(1830)">
+            <span class="dot"></span>
+            <b>30:30 作业示范</b>
+            <p>展示多种提交方式和标记方法</p>
+          </div>
+          <div class="event" onclick="seekTo(1950)">
+            <span class="dot"></span>
+            <b>32:30 笔记要求</b>
+            <p>手写或截图均可，需体现反思</p>
+          </div>
+          <div class="event" onclick="seekTo(2020)">
+            <span class="dot"></span>
+            <b>33:40 结语</b>
+            <p>有问题即时交流，期待有所收获</p>
+          </div>
+
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- ===== REVIEW PAGE ===== -->
+<div class="page" id="page-review">
+  <div class="layout">
+    <aside class="side left">
+      <h3>复习导航</h3>
+      <div class="tree-item active">▾ 本节知识地图</div>
+      <div class="tree-item tree-child">核心框架与目标</div>
+      <div class="tree-item tree-child">适用人群</div>
+      <div class="tree-item tree-child">考试基本信息</div>
+      <div class="tree-item tree-child">主要题型</div>
+      <div class="tree-item tree-child">提分三大要素</div>
+      <div class="tree-item tree-child">刷题顺序（剑桥雅思系列）</div>
+      <div class="tree-item tree-child">课程内容</div>
+      <div class="tree-item tree-child">作业提交要求</div>
+      <div class="tree-item tree-child">基础积累</div>
+      <div class="tree-item tree-child">真题练习</div>
+
+      <h3>我的状态</h3>
+      <div class="tree-item">🔴 还没掌握 · 2</div>
+      <div class="tree-item">🟡 模糊 · 3</div>
+      <div class="tree-item">🟢 已掌握 · 4</div>
+    </aside>
+    <main class="main">
+      <div class="reviewhead">
+        <div>
+          <h1>2 分钟，把整节课重新想一遍</h1>
+          <div class="muted small" style="margin-top:6px">复习不是重看视频，而是先回忆 → 再验证 → 最后溯源。</div>
+        </div>
+        <button class="btn primary" onclick="startReview()">开始快速复习</button>
+        <button class="btn primary-blue" style="margin-left:8px" onclick="switchPhase('practice')">进入练习 →</button>
+      </div>
+      <div class="scoregrid">
+        <div class="card stat"><span class="muted small">知识模块</span><b>15</b><span class="muted small">本节全部覆盖</span></div>
+        <div class="card stat"><span class="muted small">老师重点</span><b>7</b><span class="muted small">全部可回溯</span></div>
+        <div class="card stat"><span class="muted small">我的想法</span><b>2</b><span class="muted small">自动挂到知识点</span></div>
+        <div class="card stat"><span class="muted small">待掌握</span><b id="weaknum">2</b><span class="muted small">建议优先复习</span></div>
+      </div>
+      <div class="reviewgrid">
+        <section class="card panel">
+          <div class="row" style="justify-content:space-between">
+            <div><b>① 先回忆，不看答案</b><div class="muted small" style="margin-top:4px">点击卡片，写在脑中的答案会被揭示</div></div>
+            <span class="tag">主动回忆</span>
+          </div>
+          <div class="recall" style="margin-top:14px">
+            <div class="recallcard" onclick="this.classList.toggle('open')">
+              <b>填空和判断占多少题？</b>
+              <div class="ans">填空+判断占约20题（总共40题），是必须把握的核心拿分题型</div>
+            </div>
+            <div class="recallcard" onclick="this.classList.toggle('open')">
+              <b>7分需要错几题以内？</b>
+              <div class="ans">错超过10个就低于7分，错超过13个就低于6.5分——每一个题都很重要</div>
+            </div>
+            <div class="recallcard" onclick="this.classList.toggle('open')">
+              <b>剑桥真题怎么用？</b>
+              <div class="ans">一旦开始做剑桥真题，一定要整套完成，不能今天做一篇明天做一篇</div>
+            </div>
+            <div class="recallcard" onclick="this.classList.toggle('open')">
+              <b>为什么要整套做真题？</b>
+              <div class="ans">一旦开始做剑桥真题，一定要整套完成，不能今天做一篇明天做一篇</div>
+            </div>
+          </div>
+          <div style="margin-top:18px">
+            <b>② 你的薄弱点</b>
+            <div class="weak">
+              <div class="row"><span>评分标准细节</span><div class="spacer"></div><span class="tag danger">还没掌握</span></div>
+              <div class="barline" style="margin-top:9px"><i style="width:28%"></i></div>
+              <button class="btn" style="margin-top:10px" onclick="seekTo(720)">回到 12:00 老师原文</button>
+            </div>
+            <div class="weak">
+              <div class="row"><span>题型整体框架</span><div class="spacer"></div><span class="tag">模糊</span></div>
+              <div class="barline" style="margin-top:9px"><i style="width:55%"></i></div>
+            </div>
+          </div>
+        </section>
+        <section class="card panel">
+          <div class="row" style="justify-content:space-between">
+            <b>③ 课程知识时间轴</b>
+            <span class="tag success">快速回看</span>
+          </div>
+          <p class="muted small" style="line-height:1.6">只看关键节点；需要深入时，再回到老师原文和视频。</p>
+          <div class="mini-timeline">
+            <div class="mini" onclick="seekTo(78)"><span class="when">01:18</span><div><b>考试基本信息</b><p>建立考试整体框架</p></div></div>
+            <div class="mini" onclick="seekTo(200)"><span class="when">03:20</span><div><b>题型总览</b><p>基础→细节→过渡→宏观</p></div></div>
+            <div class="mini" onclick="seekTo(720)"><span class="when">12:00</span><div><b>★ 评分标准</b><p>错10题=7分关键线</p></div></div>
+            <div class="mini" onclick="seekTo(1095)"><span class="when">18:15</span><div><b>刷题顺序</b><p>C13→C4→C9→C15</p></div></div>
+            <div class="mini" onclick="seekTo(1340)"><span class="when">22:20</span><div><b>课程大纲</b><p>启航班vs飞跃班</p></div></div>
+          </div>
+          <div class="sourcejump">
+            <b style="font-size:13px">④ 最后再溯源</b>
+            <p class="muted small" style="line-height:1.6">你刚才没记住的，不需要重新看 34 分钟。直接跳到对应老师原文 / 视频位置。</p>
+            <button class="btn primary" style="margin-top:10px" onclick="seekTo(720)">▶ 定位老师原文 12:00</button>
+          </div>
+        </section>
+      </div>
+    </main>
+    <aside class="side right">
+      <h3>本次复习结果</h3>
+      <div style="padding:0 16px">
+        <div class="card" style="padding:15px;margin-bottom:11px">
+          <b style="font-size:13px">知识掌握</b>
+          <div style="font-size:30px;font-weight:800;margin:7px 0">13 / 15</div>
+          <div class="barline"><i style="width:78%"></i></div>
+          <p class="muted small" style="line-height:1.6">你已经覆盖大部分知识点。剩下 2 个薄弱点可以直接进入原文。</p>
+        </div>
+        <div class="card" style="padding:15px;margin-bottom:11px">
+          <b style="font-size:13px">老师重点</b>
+          <p class="muted small">★ 不管纸笔还是机考，60分钟都包含答题和填写答题卡的...</p>
+          <p class="muted small">★ 填空+判断占约20题（总共40题），是必须把握的核...</p>
+          <p class="muted small">★ 错超过10个就低于7分，错超过13个就低于6.5分...</p>
+          <button class="btn" style="width:100%;margin-top:8px" onclick="toast('已打开老师重点列表')">查看全部重点</button>
+        </div>
+        <div class="card" style="padding:15px">
+          <b style="font-size:13px">我的学习轨迹</b>
+          <p class="muted small">💭 2 条想法</p>
+          <p class="muted small">🔗 2 个自动归类节点</p>
+          <p class="muted small">🎯 2 个待掌握</p>
+          <button class="btn primary-blue" style="width:100%;margin-top:8px" onclick="toast('已生成下一次复习入口')">安排下一次复习</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- ===== PRACTICE PAGE ===== -->
+<div class="page" id="page-practice">
+  <div class="layout">
+    <aside class="side left">
+      <h3>练习导航</h3>
+      <div class="tree-item active" onclick="scrollToQuestion(0)">📝 选择题 · 3 题</div>
+      <div class="tree-item" onclick="scrollToQuestion(3)">⭕ 判断题 · 2 题</div>
+      <div class="tree-item" onclick="scrollToQuestion(5)">✏️ 填空题 · 2 题</div>
+      <h3>题型分布</h3>
+      <div style="padding: 0 16px;">
+        <div class="card" style="padding:14px;margin-bottom:11px">
+          <b style="font-size:13px">本节练习</b>
+          <div style="margin-top:8px;font-size:13px;color:var(--text-secondary)">
+            <div>选择题 × 3</div>
+            <div>判断题 × 2</div>
+            <div>填空题 × 2</div>
+          </div>
+        </div>
+        <div class="card" style="padding:14px">
+          <b style="font-size:13px">考试题型占比</b>
+          <div style="margin-top:8px">
+            <div class="row" style="margin-bottom:6px"><span style="font-size:12px">填空+判断</span><div class="spacer"></div><span class="tag success">~50%</span></div>
+            <div class="row" style="margin-bottom:6px"><span style="font-size:12px">选择题</span><div class="spacer"></div><span class="tag">过渡</span></div>
+            <div class="row"><span style="font-size:12px">匹配+Heading</span><div class="spacer"></div><span class="tag">宏观</span></div>
+          </div>
+        </div>
+      </div>
+    </aside>
+    <main class="main">
+      <div class="practice-header">
+        <h1>练一练，检验学习效果</h1>
+        <p>基于本节课程内容，练习雅思阅读核心题型。答完即时反馈，薄弱点自动标记。</p>
+      </div>
+      <div class="practice-stats">
+        <div class="card practice-stat"><span class="muted small">总题数</span><b>7</b></div>
+        <div class="card practice-stat"><span class="muted small">已完成</span><b id="doneCount">0</b></div>
+        <div class="card practice-stat"><span class="muted small">正确率</span><b id="accuracy">--</b></div>
+        <div class="card practice-stat"><span class="muted small">预计用时</span><b>5 min</b></div>
+      </div>
+
+      <div id="questionList">
+        <!-- Q1: 选择题 -->
+        <div class="card question-card" data-qid="0" data-type="choice" data-answer="1">
+          <h3><span class="question-type">选择题</span> 第 1 题</h3>
+          <div class="question-text">雅思阅读考试的总时长是多少？</div>
+          <div class="options">
+            <div class="option" onclick="selectOption(this, 0)"><span class="option-marker">A</span>30 分钟</div>
+            <div class="option" onclick="selectOption(this, 1)"><span class="option-marker">B</span>60 分钟</div>
+            <div class="option" onclick="selectOption(this, 2)"><span class="option-marker">C</span>90 分钟</div>
+            <div class="option" onclick="selectOption(this, 3)"><span class="option-marker">D</span>120 分钟</div>
+          </div>
+          <button class="check-btn" onclick="checkAnswer(this)" disabled>检查答案</button>
+          <div class="feedback correct">✓ 正确！雅思阅读考试时间为 60 分钟（含填写答题卡时间），3 篇文章共 40 题。</div>
+          <div class="feedback incorrect">✗ 再想想。提示：回忆老师说的"不管纸笔还是机考，60 分钟都包含答题和填写答题卡的时间"。</div>
+        </div>
+
+        <!-- Q2: 选择题 -->
+        <div class="card question-card" data-qid="1" data-type="choice" data-answer="2">
+          <h3><span class="question-type">选择题</span> 第 2 题</h3>
+          <div class="question-text">雅思阅读想要考到 7 分，最多可以错几道题？</div>
+          <div class="options">
+            <div class="option" onclick="selectOption(this, 0)"><span class="option-marker">A</span>7 个</div>
+            <div class="option" onclick="selectOption(this, 1)"><span class="option-marker">B</span>10 个</div>
+            <div class="option" onclick="selectOption(this, 2)"><span class="option-marker">C</span>13 个</div>
+            <div class="option" onclick="selectOption(this, 3)"><span class="option-marker">D</span>15 个</div>
+          </div>
+          <button class="check-btn" onclick="checkAnswer(this)" disabled>检查答案</button>
+          <div class="feedback correct">✓ 正确！错 10 个以内 = 7 分以上。错 7 个以内 = 7.5 分，错 13-14 个 = 6.5 分。</div>
+          <div class="feedback incorrect">✗ 再想想。提示：老师说"错超过 10 个就低于 7 分"——所以 7 分的关键线是 10 个以内。</div>
+        </div>
+
+        <!-- Q3: 选择题 -->
+        <div class="card question-card" data-qid="2" data-type="choice" data-answer="1">
+          <h3><span class="question-type">选择题</span> 第 3 题</h3>
+          <div class="question-text">以下哪种题型组合在雅思阅读中占比最大（约 20 题 / 40 题）？</div>
+          <div class="options">
+            <div class="option" onclick="selectOption(this, 0)"><span class="option-marker">A</span>选择题 + 匹配题</div>
+            <div class="option" onclick="selectOption(this, 1)"><span class="option-marker">B</span>填空题 + 判断题</div>
+            <div class="option" onclick="selectOption(this, 2)"><span class="option-marker">C</span>Heading 题 + 填空题</div>
+            <div class="option" onclick="selectOption(this, 3)"><span class="option-marker">D</span>匹配题 + 判断题</div>
+          </div>
+          <button class="check-btn" onclick="checkAnswer(this)" disabled>检查答案</button>
+          <div class="feedback correct">✓ 正确！填空题 + 判断题占约 20 题（总共 40 题），是必须把握的核心拿分题型。</div>
+          <div class="feedback incorrect">✗ 再想想。提示：老师说"填空+判断占约 20 题，是必须把握的基础题型"。</div>
+        </div>
+
+        <!-- Q4: 判断题 -->
+        <div class="card question-card" data-qid="3" data-type="tfng" data-answer="true">
+          <h3><span class="question-type">判断题</span> 第 4 题</h3>
+          <div class="question-text">雅思阅读考试的 3 篇文章难度是逐篇递增的，第 3 篇通常最难。</div>
+          <div class="options">
+            <div class="option" onclick="selectOption(this, 0)" data-val="true"><span class="option-marker">✓</span>True</div>
+            <div class="option" onclick="selectOption(this, 1)" data-val="false"><span class="option-marker">✗</span>False</div>
+            <div class="option" onclick="selectOption(this, 2)" data-val="ng"><span class="option-marker">?</span>Not Given</div>
+          </div>
+          <button class="check-btn" onclick="checkAnswer(this)" disabled>检查答案</button>
+          <div class="feedback correct">✓ 正确！老师明确说"难度逐篇递增，第 3 篇通常最难（不一定，但基本上如此）"。</div>
+          <div class="feedback incorrect">✗ 再想想。提示：回忆老师关于文章难度分布的描述——"难度递增"是基本规律。</div>
+        </div>
+
+        <!-- Q5: 判断题 -->
+        <div class="card question-card" data-qid="4" data-type="tfng" data-answer="false">
+          <h3><span class="question-type">判断题</span> 第 5 题</h3>
+          <div class="question-text">使用剑桥雅思真题刷题时，可以每天只做一篇，不需要整套完成。</div>
+          <div class="options">
+            <div class="option" onclick="selectOption(this, 0)" data-val="true"><span class="option-marker">✓</span>True</div>
+            <div class="option" onclick="selectOption(this, 1)" data-val="false"><span class="option-marker">✗</span>False</div>
+            <div class="option" onclick="selectOption(this, 2)" data-val="ng"><span class="option-marker">?</span>Not Given</div>
+          </div>
+          <button class="check-btn" onclick="checkAnswer(this)" disabled>检查答案</button>
+          <div class="feedback correct">✓ 正确！老师强调"一旦开始做剑 9-12，一定要整套完成，不能今天做一篇明天做一篇"。</div>
+          <div class="feedback incorrect">✗ 再想想。提示：老师特别强调过刷题要"整套完成"，不能零散地做。</div>
+        </div>
+
+        <!-- Q6: 填空题 -->
+        <div class="card question-card" data-qid="5" data-type="fill" data-answer="定位">
+          <h3><span class="question-type">填空题</span> 第 6 题</h3>
+          <div class="question-text">雅思阅读解题的基础能力是 ______ 和同义替换。（填入两个字的关键词）</div>
+          <input class="fill-input" type="text" placeholder="输入你的答案…" oninput="onFillInput(this)">
+          <button class="check-btn" onclick="checkFill(this)" disabled>检查答案</button>
+          <div class="feedback correct">✓ 正确！"定位"和"同义替换"是所有题型的基础，课程会先从这里开始。</div>
+          <div class="feedback incorrect">✗ 再想想。提示：老师说"____ 和同义替换是所有题型的基础知识"——回忆课程解题逻辑的起点。</div>
+        </div>
+
+        <!-- Q7: 填空题 -->
+        <div class="card question-card" data-qid="6" data-type="fill" data-answer="正确率">
+          <h3><span class="question-type">填空题</span> 第 7 题</h3>
+          <div class="question-text">做真题时，______ 的重要性大于速度，先保证它再慢慢提速。（填入三个字）</div>
+          <input class="fill-input" type="text" placeholder="输入你的答案…" oninput="onFillInput(this)">
+          <button class="check-btn" onclick="checkFill(this)" disabled>检查答案</button>
+          <div class="feedback correct">✓ 正确！老师说"正确率的重要性大于速度，先保证正确率再慢慢提速"。</div>
+          <div class="feedback incorrect">✗ 再想想。提示：老师说的是做题时先保证什么，再提速？不是速度，而是另一个维度。</div>
+        </div>
+      </div>
+
+      <div class="progress-section">
+        <div class="card" style="padding:18px">
+          <div class="row" style="justify-content:space-between;margin-bottom:10px">
+            <b>练习进度</b>
+            <span class="muted small" id="progressLabel">0 / 7 已完成</span>
+          </div>
+          <div class="progress-bar-large"><i id="practiceProgress" style="width:0%"></i></div>
+          <div class="row" style="margin-top:12px">
+            <button class="btn ghost" onclick="resetPractice()">重新练习</button>
+            <div class="spacer"></div>
+            <button class="btn primary-blue" onclick="switchPhase('review')">进入复习 →</button>
+          </div>
+        </div>
+      </div>
+    </main>
+    <aside class="side right">
+      <h3>练习结果</h3>
+      <div style="padding:0 16px">
+        <div class="card" style="padding:15px;margin-bottom:11px">
+          <b style="font-size:13px">答题统计</b>
+          <div id="resultSummary" style="margin-top:10px">
+            <p class="muted small">还没有完成任何题目</p>
+          </div>
+        </div>
+        <div class="card" style="padding:15px;margin-bottom:11px">
+          <b style="font-size:13px">薄弱知识点</b>
+          <div id="weakPoints" style="margin-top:10px">
+            <p class="muted small">答完题后自动标记</p>
+          </div>
+        </div>
+        <div class="card" style="padding:15px">
+          <b style="font-size:13px">关联课程节点</b>
+          <div style="margin-top:10px">
+            <div class="tree-item" onclick="seekTo(78)" style="padding:8px 0;font-size:12px">📖 考试基本信息 → 01:18</div>
+            <div class="tree-item" onclick="seekTo(495)" style="padding:8px 0;font-size:12px">📖 评分标准 → 08:15</div>
+            <div class="tree-item" onclick="seekTo(1050)" style="padding:8px 0;font-size:12px">📖 刷题策略 → 17:30</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+</div><!-- .app -->
+
+<!-- NOTE MODAL -->
+<div class="modal" id="noteModal">
+  <div class="modalbox">
+    <div class="row">
+      <b>记录我的想法</b>
+      <div class="spacer"></div>
+      <span class="pill" id="modalTime">00:00 · 知识节点</span>
+    </div>
+    <p class="muted small" style="margin:8px 0">保存后会自动绑定时间；AI稍后把它归入对应知识节点。</p>
+    <textarea id="noteText" placeholder="例如：这里老师说填空和判断最容易混，我想回去找一个具体例子……"></textarea>
+    <div class="row" style="justify-content:flex-end;margin-top:12px">
+      <button class="btn" onclick="closeNoteModal()">取消</button>
+      <button class="btn primary" onclick="saveNote()">保存想法</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const video = document.getElementById('mainVideo');
+  const transcriptLines = document.querySelectorAll('.transcript-line');
+  const treeNodes = document.querySelectorAll('#learn-tree .tree-item');
+
+  // Navigation
+  function selectSubject(idx) {
+    document.querySelectorAll('.subject-card').forEach((c, i) => c.classList.toggle('active', i === idx));
+  }
+
+  function enterLesson(title) {
+    document.getElementById('page-catalog').classList.remove('active');
+    document.getElementById('page-preview').classList.add('active');
+    document.getElementById('phaseBadge').textContent = 'PREVIEW · 预习';
+    document.getElementById('breadcrumb').innerHTML =
+      '<a onclick="backToCatalog()">雅思备考</a> · <span class="current">' + title + '</span>';
+  }
+
+  function backToCatalog() {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-catalog').classList.add('active');
+    document.getElementById('breadcrumb').innerHTML =
+      '<span>雅思备考</span> · <span class="current">阅读</span>';
+    document.getElementById('phaseBadge').textContent = '';
+  }
+
+  function switchPhase(phase) {
+    const pages = { preview: 'page-preview', learn: 'page-learn', review: 'page-review', practice: 'page-practice' };
+    const badges = { preview: 'PREVIEW · 预习', learn: 'CLASS · 网课', review: 'REVIEW · 复习', practice: 'PRACTICE · 练习' };
+    document.querySelectorAll('.page').forEach(p => {
+      if (Object.values(pages).includes(p.id)) p.classList.remove('active');
+    });
+    document.getElementById(pages[phase]).classList.add('active');
+    document.getElementById('phaseBadge').textContent = badges[phase];
+  }
+
+  // Video controls
+  let playing = false;
+  let speeds = [1, 1.25, 1.5];
+  let speedIdx = 0;
+
+  function togglePlay() {
+    if (!video) return;
+    if (playing) { video.pause(); document.getElementById('playBtn').textContent = '▶ 播放'; }
+    else { video.play(); document.getElementById('playBtn').textContent = '❚❚ 暂停'; }
+    playing = !playing;
+  }
+
+  function cycleSpeed() {
+    speedIdx = (speedIdx + 1) % speeds.length;
+    if (video) video.playbackRate = speeds[speedIdx];
+    document.getElementById('speed').textContent = speeds[speedIdx] + '×';
+  }
+
+  function seekBar(e) {
+    if (!video) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pct = (e.clientX - rect.left) / rect.width;
+    video.currentTime = pct * video.duration;
+  }
+
+  function seekTo(sec) {
+    if (!video) return;
+    video.currentTime = sec;
+    video.play();
+    playing = true;
+    document.getElementById('playBtn').textContent = '❚❚ 暂停';
+    switchPhase('learn');
+    toast('已定位到 ' + fmtTime(sec));
+  }
+
+  // Video + Transcript sync (karaoke style)
+  if (video) {
+    video.addEventListener('timeupdate', function() {
+      const t = video.currentTime;
+
+      // Update progress bar
+      document.getElementById('bar').style.width = (t / video.duration * 100) + '%';
+      document.getElementById('time').textContent = fmtTime(t) + ' / ' + fmtTime(video.duration);
+
+      // Update transcript highlight
+      transcriptLines.forEach(line => {
+        const start = parseFloat(line.dataset.start);
+        const end = parseFloat(line.dataset.end);
+        line.classList.remove('read', 'current');
+        if (t >= start && t < end) {
+          line.classList.add('current');
+          line.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else if (t >= end) {
+          line.classList.add('read');
+        }
+      });
+
+      // Update tree highlight (2 levels)
+      treeNodes.forEach(node => {
+        const start = parseFloat(node.dataset.start);
+        const end = parseFloat(node.dataset.end);
+        node.classList.remove('active', 'in-range');
+        if (t >= start && t < end) {
+          node.classList.add('in-range');
+        }
+        // L1 active (parent section)
+        if (t >= start && t < end && !node.classList.contains('tree-child')) {
+          node.classList.add('active');
+        }
+        // L2 active (topic)
+        if (t >= start && t < end && node.classList.contains('tree-child')) {
+          node.classList.add('active');
+          node.classList.remove('in-range');
+        }
+      });
+    });
+
+    video.addEventListener('ended', function() {
+      playing = false;
+      document.getElementById('playBtn').textContent = '▶ 播放';
+    });
+
+    // Click transcript to seek video
+    transcriptLines.forEach(line => {
+      line.addEventListener('click', function() {
+        video.currentTime = parseFloat(this.dataset.start);
+        video.play();
+        playing = true;
+        document.getElementById('playBtn').textContent = '❚❚ 暂停';
+      });
+    });
+  }
+
+  // Note modal
+  function openNoteModal() {
+    if (video) {
+      video.pause();
+      playing = false;
+      document.getElementById('playBtn').textContent = '▶ 播放';
+      const t = fmtTime(video.currentTime);
+      const activeNode = document.querySelector('#learn-tree .tree-item.active');
+      const nodeName = activeNode ? activeNode.textContent.trim() : '知识节点';
+      document.getElementById('modalTime').textContent = t + ' · ' + nodeName;
+    }
+    document.getElementById('noteModal').classList.add('open');
+    document.getElementById('noteText').focus();
+  }
+  function closeNoteModal() {
+    document.getElementById('noteModal').classList.remove('open');
+  }
+  function saveNote() {
+    if (!document.getElementById('noteText').value.trim()) return;
+    closeNoteModal();
+    toast('已保存想法 · 稍后自动归类');
+    document.getElementById('noteText').value = '';
+    if (video) { video.play(); playing = true; document.getElementById('playBtn').textContent = '❚❚ 暂停'; }
+  }
+
+  function fmtTime(s) {
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+  }
+
+  // Review
+  function startReview() { toast('进入主动回忆模式：先点卡片，不急着看答案'); }
+
+  // Practice
+  const practiceState = { answered: new Set(), correct: new Set() };
+
+  function selectOption(el, idx) {
+    const card = el.closest('.question-card');
+    if (card.classList.contains('answered')) return;
+    card.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    card.querySelector('.check-btn').disabled = false;
+    card.dataset.selected = idx;
+  }
+
+  function checkAnswer(btn) {
+    const card = btn.closest('.question-card');
+    if (card.classList.contains('answered')) return;
+    card.classList.add('answered');
+    const qid = parseInt(card.dataset.qid);
+    const answerIdx = parseInt(card.dataset.answer);
+    const selectedIdx = parseInt(card.dataset.selected);
+    const isCorrect = selectedIdx === answerIdx;
+
+    card.querySelectorAll('.option').forEach((o, i) => {
+      o.style.cursor = 'default';
+      if (i === answerIdx) o.classList.add('correct');
+      else if (i === selectedIdx && !isCorrect) o.classList.add('incorrect');
+    });
+
+    btn.style.display = 'none';
+    card.querySelector(isCorrect ? '.feedback.correct' : '.feedback.incorrect').classList.add('show');
+
+    practiceState.answered.add(qid);
+    if (isCorrect) practiceState.correct.add(qid);
+    updatePracticeUI();
+  }
+
+  function onFillInput(input) {
+    const card = input.closest('.question-card');
+    card.querySelector('.check-btn').disabled = !input.value.trim();
+    card.dataset.selected = input.value.trim();
+  }
+
+  function checkFill(btn) {
+    const card = btn.closest('.question-card');
+    if (card.classList.contains('answered')) return;
+    card.classList.add('answered');
+    const qid = parseInt(card.dataset.qid);
+    const answer = card.dataset.answer;
+    const selected = card.dataset.selected || '';
+    const isCorrect = selected === answer;
+
+    const input = card.querySelector('.fill-input');
+    input.classList.add(isCorrect ? 'correct' : 'incorrect');
+    input.readOnly = true;
+    btn.style.display = 'none';
+
+    card.querySelector(isCorrect ? '.feedback.correct' : '.feedback.incorrect').classList.add('show');
+
+    practiceState.answered.add(qid);
+    if (isCorrect) practiceState.correct.add(qid);
+    updatePracticeUI();
+  }
+
+  function updatePracticeUI() {
+    const total = 7;
+    const done = practiceState.answered.size;
+    const correct = practiceState.correct.size;
+    document.getElementById('doneCount').textContent = done;
+    document.getElementById('accuracy').textContent = done > 0 ? Math.round(correct / done * 100) + '%' : '--';
+    document.getElementById('practiceProgress').style.width = (done / total * 100) + '%';
+    document.getElementById('progressLabel').textContent = done + ' / ' + total + ' 已完成';
+
+    const summaryEl = document.getElementById('resultSummary');
+    if (done > 0) {
+      const weakNames = [];
+      document.querySelectorAll('.question-card').forEach(c => {
+        const qid = parseInt(c.dataset.qid);
+        if (practiceState.answered.has(qid) && !practiceState.correct.has(qid)) {
+          weakNames.push('第 ' + (qid + 1) + ' 题');
+        }
+      });
+      summaryEl.innerHTML =
+        '<div style="font-size:24px;font-weight:800;color:var(--primary);margin-bottom:6px">' + correct + ' / ' + done + '</div>' +
+        '<p class="muted small">正确 ' + correct + ' 题，错误 ' + (done - correct) + ' 题</p>' +
+        (weakNames.length > 0 ? '<div style="margin-top:8px"><span class="tag danger">需复习</span> <span class="muted small">' + weakNames.join('、') + '</span></div>' : '<div style="margin-top:8px"><span class="tag success">全部正确</span></div>');
+
+      const weakEl = document.getElementById('weakPoints');
+      if (weakNames.length > 0) {
+        weakEl.innerHTML = weakNames.map(n => '<p class="muted small" style="margin-bottom:4px">🔴 ' + n + ' → <a style="color:var(--primary);cursor:pointer" onclick="switchPhase(\"learn\")">回到课程</a></p>').join('');
+      } else {
+        weakEl.innerHTML = '<p class="muted small" style="color:var(--green)">✓ 暂无薄弱点</p>';
+      }
+    }
+  }
+
+  function resetPractice() {
+    practiceState.answered.clear();
+    practiceState.correct.clear();
+    document.querySelectorAll('.question-card').forEach(c => {
+      c.classList.remove('answered');
+      c.querySelectorAll('.option').forEach(o => {
+        o.classList.remove('selected', 'correct', 'incorrect');
+        o.style.cursor = 'pointer';
+      });
+      c.querySelectorAll('.feedback').forEach(f => f.classList.remove('show'));
+      c.querySelector('.check-btn').style.display = '';
+      c.querySelector('.check-btn').disabled = true;
+      const input = c.querySelector('.fill-input');
+      if (input) { input.classList.remove('correct', 'incorrect'); input.value = ''; input.readOnly = false; }
+    });
+    updatePracticeUI();
+    document.getElementById('resultSummary').innerHTML = '<p class="muted small">还没有完成任何题目</p>';
+    document.getElementById('weakPoints').innerHTML = '<p class="muted small">答完题后自动标记</p>';
+  }
+
+  function scrollToQuestion(idx) {
+    const cards = document.querySelectorAll('.question-card');
+    if (cards[idx]) cards[idx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  // Toast
+  function toast(s) {
+    const t = document.getElementById('toast');
+    t.textContent = s;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 1600);
+  }
+</script>
+</body>
+</html>

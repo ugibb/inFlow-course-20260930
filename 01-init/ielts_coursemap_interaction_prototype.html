@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>IELTS Course Map · 雅思课程知识时间轴原型</title>
+<style>
+:root{
+  --bg:#f6f7f9; --panel:#fff; --line:#e5e7eb; --text:#17181c; --muted:#737780;
+  --accent:#315efb; --accent2:#eef2ff; --warn:#f59e0b; --note:#7c3aed;
+}
+*{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;color:var(--text);background:var(--bg)}
+button{font:inherit} .app{height:100vh;display:grid;grid-template-rows:60px 1fr 92px;overflow:hidden}
+header{background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 22px;gap:18px}
+.logo{font-weight:750;font-size:16px;letter-spacing:.2px}.crumb{color:var(--muted);font-size:13px}
+.progress{margin-left:auto;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px}.bar{width:120px;height:5px;background:#eee;border-radius:9px;overflow:hidden}.bar i{display:block;width:12%;height:100%;background:var(--accent)}
+main{min-height:0;display:grid;grid-template-columns:280px minmax(440px,1fr) 330px;gap:0}
+aside,.right{background:#fff;min-height:0;overflow:auto}.left{border-right:1px solid var(--line);padding:18px 14px}.right{border-left:1px solid var(--line);padding:18px}
+h1{font-size:20px;margin:0 0 7px}.sub{font-size:12px;color:var(--muted);line-height:1.6}
+.overview{margin:15px 0 18px;padding:13px;border:1px solid var(--line);border-radius:12px;background:#fafafa}
+.overview b{font-size:12px}.overview p{font-size:12px;color:#555;line-height:1.6;margin:7px 0 0}
+.tree{font-size:13px}.node{margin:2px 0}.node>button{width:100%;border:0;background:transparent;text-align:left;padding:9px 8px;border-radius:8px;cursor:pointer;color:#34363b}
+.node>button:hover{background:#f5f6f8}.node.active>button{background:var(--accent2);color:#2344c4;font-weight:650}.node .children{padding-left:17px;border-left:1px solid #eee;margin-left:10px}.leaf{padding:6px 8px;color:#666;font-size:12px;cursor:pointer;border-radius:7px}.leaf:hover{background:#f7f7f8}.leaf span{margin-right:5px}.leaf.note{color:var(--note)}
+.center{min-width:0;overflow:auto;padding:28px 42px;background:#fcfcfd}.content{max-width:850px;margin:auto}
+.badge{display:inline-flex;gap:6px;align-items:center;background:#eef2ff;color:#3154d8;border-radius:20px;padding:5px 9px;font-size:11px;font-weight:650}
+.title{font-size:28px;line-height:1.25;margin:13px 0 8px}.desc{color:#646871;font-size:14px;line-height:1.75;margin-bottom:25px}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:19px;margin:14px 0;box-shadow:0 1px 2px rgba(0,0,0,.02)}
+.card h3{font-size:15px;margin:0 0 12px}.card p,.card li{font-size:14px;line-height:1.8;color:#36383d}.card ul{margin:0;padding-left:20px}
+.teacher{border-left:3px solid var(--warn);background:#fffaf0}.teacher .tag{color:#9a6500}.source{border-left:3px solid #94a3b8;background:#f8fafc}
+.actions{display:flex;gap:8px;margin-top:16px}.btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 11px;font-size:12px;cursor:pointer}.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.right h2{font-size:14px;margin:0 0 13px}.search{width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 10px;outline:none;margin-bottom:18px}.timeline{position:relative;padding:5px 0 15px}.rail{height:7px;background:#e9ebef;border-radius:10px;position:relative;margin:12px 4px 25px}.seg{position:absolute;top:0;height:100%;border-radius:10px;background:#cbd5ff}.playhead{position:absolute;top:-5px;width:3px;height:17px;background:var(--accent);left:34%;border-radius:3px}
+.marker{position:absolute;top:-6px;width:15px;height:15px;border-radius:50%;background:#fff;border:3px solid var(--accent);transform:translateX(-50%);cursor:pointer}.marker.warn{border-color:var(--warn)}.marker.note{border-color:var(--note)}
+.tick{position:absolute;top:16px;transform:translateX(-50%);font-size:10px;color:#999}.tlitem{display:flex;gap:10px;padding:10px 7px;border-radius:8px;cursor:pointer}.tlitem:hover{background:#f6f7f9}.time{font-variant-numeric:tabular-nums;color:var(--accent);font-size:11px;width:48px}.tltext{font-size:12px;line-height:1.5}.tltype{display:block;color:#999;font-size:10px;margin-top:2px}
+.now{background:#f5f7ff;border:1px solid #dfe5ff;border-radius:10px;padding:10px;margin:12px 0 18px;font-size:12px}.now b{display:block;margin-bottom:4px}.legend{display:flex;gap:12px;font-size:10px;color:#777;margin-top:12px}.dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:4px}.blue{background:var(--accent)}.yellow{background:var(--warn)}.purple{background:var(--note)}
+footer{background:#101216;color:#fff;display:grid;grid-template-columns:230px 1fr 250px;align-items:center;padding:0 22px;gap:20px}.video-title{font-size:12px}.video-title b{display:block;font-size:13px;margin-bottom:4px}.controls{display:flex;align-items:center;gap:12px}.play{width:34px;height:34px;border-radius:50%;border:0;background:#fff;cursor:pointer}.vrail{flex:1;height:5px;background:#444;border-radius:8px;position:relative}.vrail i{display:block;width:34%;height:100%;background:#fff;border-radius:8px}.timecode{font-variant-numeric:tabular-nums;font-size:11px;color:#bbb}.foot-actions{text-align:right}.foot-actions button{background:#202329;border:1px solid #383c44;color:#ddd;border-radius:7px;padding:7px 9px;margin-left:6px;font-size:11px;cursor:pointer}
+.toast{position:fixed;right:25px;bottom:112px;background:#17181c;color:#fff;padding:10px 14px;border-radius:9px;font-size:12px;opacity:0;transform:translateY(8px);transition:.2s}.toast.show{opacity:1;transform:none}
+@media(max-width:1000px){main{grid-template-columns:230px 1fr}.right{display:none}} 
+</style>
+</head>
+<body>
+<div class="app">
+<header><div class="logo">CourseMap</div><div class="crumb">雅思阅读 · 导学课</div><div class="progress">已学习 12% <span class="bar"><i></i></span></div></header>
+
+<main>
+<aside class="left">
+  <h1>课程大纲</h1>
+  <div class="sub">只展示“知识点”，不把重点、笔记混进大纲。</div>
+  <div class="overview"><b>2 分钟课程预览</b><p>这节课主要讲：雅思阅读考情、复习计划与刷题顺序、课程安排和作业要求。</p></div>
+  <div class="tree">
+    <div class="node active"><button onclick="selectNode(this,'雅思阅读：基本考情','老师从考试时间、文章结构、题型、评分标准等方面介绍雅思阅读。')">01　雅思阅读基本考情</button>
+      <div class="children">
+        <div class="node"><button onclick="selectNode(this,'考试时间与文章结构','考试时间、三篇文章、40题，以及纸笔/机考的差异。')">1.1 考试时间与文章结构</button></div>
+        <div class="node"><button onclick="selectNode(this,'雅思阅读题型','定位与同义替换、填空、判断、选择、匹配、Heading 等题型。')">1.2 阅读题型</button>
+          <div class="children">
+            <div class="leaf" onclick="jump(720,'老师重点：F 与 NG 的区分')"><span>💡</span>老师重点：F / NG 区分</div>
+            <div class="leaf" onclick="jump(890,'老师提醒：题型分类不是最重要的')"><span>💡</span>老师经验提醒</div>
+          </div>
+        </div>
+        <div class="node"><button onclick="selectNode(this,'目标分数与评分','7、6.5、6 分对应的整体分数组合，以及阅读单科错题数量与分数的关系。')">1.3 目标分数与评分</button>
+          <div class="children"><div class="leaf" onclick="jump(1510,'老师重点：每一道题都重要')"><span>💡</span>老师重点：每题都重要</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="node"><button onclick="selectNode(this,'02 复习计划与提分策略','语言能力、方法技巧、合理计划三部分构成提分策略。')">02　复习计划与提分策略</button>
+      <div class="children">
+        <div class="node"><button onclick="selectNode(this,'2.1 提分的三个来源','语言能力是基础，方法技巧是招式，合理计划是策略。')">2.1 提分的三个来源</button></div>
+        <div class="node"><button onclick="selectNode(this,'2.2 刷题顺序','剑四到剑七的不同定位：基础诊断、专项训练、整套训练与考前模拟。')">2.2 刷题顺序</button>
+          <div class="children"><div class="leaf" onclick="jump(3180,'老师重点：先保证正确率，再慢慢提速')"><span>💡</span>老师重点：正确率 ＞ 速度</div></div>
+        </div>
+        <div class="node"><button onclick="selectNode(this,'2.3 纸笔与机考','决定考试形式后，平时刷题尽量使用对应形式。')">2.3 纸笔与机考</button></div>
+      </div>
+    </div>
+    <div class="node"><button onclick="selectNode(this,'03 课程介绍','课程班型、直播课、视频课及课程内容结构。')">03　课程介绍</button>
+      <div class="children"><div class="node"><button onclick="selectNode(this,'3.1 启航班与非越班','不同基础和目标分数对应不同班型。')">3.1 班型与学习路径</button></div></div>
+    </div>
+    <div class="node"><button onclick="selectNode(this,'04 作业与学习要求','提交格式、问题标记、提交时间、老师讲解与复盘方式。')">04　作业与学习要求</button>
+      <div class="children">
+        <div class="node"><button onclick="selectNode(this,'4.1 作业提交','科目、日期、题目截图和问题标记。')">4.1 作业提交</button>
+          <div class="children"><div class="leaf note" onclick="jump(5150,'我的思考：以后错题一定要记录为什么错')"><span>📝</span>我的思考 · 以后错题要写原因</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<section class="center">
+<div class="content">
+  <span class="badge">正在预习 · 知识节点</span>
+  <div class="title" id="title">雅思阅读：基本考情</div>
+  <div class="desc" id="desc">老师从考试时间、文章结构、题型、评分标准等方面介绍雅思阅读。这里是 AI 整理后的“教材式”内容，而不是老师原话。</div>
+
+  <div class="card"><h3>你需要知道什么</h3><ul id="bullets">
+    <li>考试时间为 1 小时，包含做题与填涂/填写答案时间。</li>
+    <li>共 3 篇文章、40 道题，文章难度通常逐渐增加。</li>
+    <li>题型覆盖填空、判断、选择、匹配、Heading 等。</li>
+    <li>评分与正确题数有关，因此每一道题都值得重视。</li>
+  </ul></div>
+
+  <div class="card teacher"><h3><span class="tag">💡 老师敲黑板</span></h3><p>老师强调：题型的分类方式并不是最重要的，真正重要的是理解每一种题型具体指什么、怎么做。</p><div class="actions"><button class="btn primary" onclick="jump(890,'老师关于题型分类的原始讲解')">▶ 回到老师这里</button><button class="btn" onclick="toast('已收藏老师重点')">☆ 收藏</button></div></div>
+
+  <div class="card source"><h3>原始讲解 · 可溯源</h3><p>这里不直接替 AI“补知识”。你可以看到 AI 整理内容对应的老师原始文字，并可继续跳转视频。</p><div class="actions"><button class="btn" onclick="toast('展开原始文字上下文')">展开上下文</button><button class="btn primary" onclick="jump(720,'跳转到视频 12:00')">12:00 ▶</button></div></div>
+
+  <div class="card"><h3>📝 我的思考</h3><p>这个区域只呈现我自己在学习过程中留下的内容。笔记会根据创建时的时间点，自动归属到对应知识节点。</p><div class="actions"><button class="btn primary" onclick="toast('新建笔记：自动绑定当前视频时间点')">＋ 添加笔记</button></div></div>
+</div>
+</section>
+
+<aside class="right">
+  <h2>课程时间轴</h2>
+  <input class="search" placeholder="搜索知识点、老师重点、我的笔记…" oninput="filterTimeline(this.value)">
+  <div class="now"><b id="nowTitle">当前：雅思阅读基本考情</b><span id="nowTime">12:00 · 视频中段</span></div>
+  <div class="timeline">
+    <div class="rail">
+      <div class="seg" style="left:0;width:30%"></div><div class="seg" style="left:30%;width:28%"></div><div class="seg" style="left:58%;width:24%"></div><div class="seg" style="left:82%;width:18%"></div>
+      <div class="playhead" id="playhead"></div>
+      <div class="marker warn" style="left:24%" title="老师重点" onclick="jump(890,'老师重点')"></div>
+      <div class="marker warn" style="left:40%" title="老师重点" onclick="jump(1510,'老师重点')"></div>
+      <div class="marker warn" style="left:62%" title="老师重点" onclick="jump(3180,'老师重点')"></div>
+      <div class="marker note" style="left:86%" title="我的思考" onclick="jump(5150,'我的思考')"></div>
+      <span class="tick" style="left:0%">00:00</span><span class="tick" style="left:25%">15:00</span><span class="tick" style="left:50%">30:00</span><span class="tick" style="left:75%">45:00</span><span class="tick" style="left:100%">60:00</span>
+    </div>
+  </div>
+  <div id="items">
+    <div class="tlitem" data-text="考试时间与文章结构"><div class="time">04:20</div><div class="tltext">考试时间与文章结构<span class="tltype">知识点</span></div></div>
+    <div class="tlitem" data-text="F NG 老师重点"><div class="time">12:00</div><div class="tltext">F / NG 区分<span class="tltype">💡 老师重点</span></div></div>
+    <div class="tlitem" data-text="目标分数 每一道题"><div class="time">25:10</div><div class="tltext">目标分数与评分<span class="tltype">💡 老师重点：每一道题都重要</span></div></div>
+    <div class="tlitem" data-text="正确率 速度"><div class="time">53:00</div><div class="tltext">刷题顺序与速度<span class="tltype">💡 老师重点：正确率优先</span></div></div>
+    <div class="tlitem" data-text="我的思考 错题 原因"><div class="time">58:40</div><div class="tltext">我的思考：错题记录原因<span class="tltype">📝 我的笔记</span></div></div>
+  </div>
+  <div class="legend"><span><i class="dot blue"></i>知识点</span><span><i class="dot yellow"></i>老师重点</span><span><i class="dot purple"></i>我的思考</span></div>
+</aside>
+</main>
+
+<footer>
+  <div class="video-title"><b>▶ 雅思阅读导学课</b><span>当前播放：12:00</span></div>
+  <div class="controls"><button class="play" onclick="togglePlay()" id="playBtn">▶</button><span class="timecode" id="clock">12:00</span><div class="vrail"><i id="vprogress"></i></div><span class="timecode">60:00</span></div>
+  <div class="foot-actions"><button onclick="toast('已创建笔记，并自动绑定 12:00')">＋ 笔记</button><button onclick="toast('已定位到原始文字')">文字</button></div>
+</footer>
+<div class="toast" id="toast"></div>
+</div>
+<script>
+let playing=false, seconds=720;
+function selectNode(btn,title,desc){document.querySelectorAll('.node').forEach(n=>n.classList.remove('active'));btn.parentElement.classList.add('active');document.getElementById('title').textContent=title;document.getElementById('desc').textContent=desc;document.getElementById('nowTitle').textContent='当前：'+title;toast('已切换知识节点')}
+function jump(sec,label){seconds=sec;update();document.getElementById('nowTitle').textContent='当前：'+label;toast('已定位到 '+fmt(sec)+' · '+label)}
+function fmt(s){let m=Math.floor(s/60),x=s%60;return String(m).padStart(2,'0')+':'+String(x).padStart(2,'0')}
+function update(){document.getElementById('clock').textContent=fmt(seconds);document.getElementById('nowTime').textContent=fmt(seconds)+' · 视频位置';document.getElementById('playhead').style.left=(seconds/3600*100)+'%';document.getElementById('vprogress').style.width=(seconds/3600*100)+'%'}
+function togglePlay(){playing=!playing;document.getElementById('playBtn').textContent=playing?'Ⅱ':'▶'}
+setInterval(()=>{if(playing&&seconds<3600){seconds++;update()}},1000)
+function filterTimeline(v){document.querySelectorAll('.tlitem').forEach(x=>x.style.display=x.dataset.text.toLowerCase().includes(v.toLowerCase())?'flex':'none')}
+function toast(t){let x=document.getElementById('toast');x.textContent=t;x.classList.add('show');setTimeout(()=>x.classList.remove('show'),1600)}
+update()
+</script>
+</body></html>

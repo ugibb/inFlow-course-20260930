@@ -1,0 +1,2186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>CourseMap｜会生长的思维导图</title>
+
+<style>
+*{box-sizing:border-box}
+
+body{
+    margin:0;
+    background:#f5f7fb;
+    color:#182033;
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        "PingFang SC",
+        "Microsoft YaHei",
+        sans-serif;
+    height:100vh;
+    overflow:hidden;
+}
+
+button{
+    font:inherit;
+    cursor:pointer;
+}
+
+/* ===== 顶部 ===== */
+
+.topbar{
+    height:68px;
+    background:white;
+    border-bottom:1px solid #e2e6ee;
+    display:flex;
+    align-items:center;
+    padding:0 25px;
+    gap:22px;
+}
+
+.logo{
+    font-size:21px;
+    font-weight:800;
+}
+
+.logo span{
+    color:#5871ee;
+}
+
+.course{
+    border-left:1px solid #e2e6ee;
+    padding-left:20px;
+    color:#697388;
+    font-size:14px;
+}
+
+.flex{
+    flex:1;
+}
+
+.progress{
+    width:260px;
+}
+
+.progress-label{
+    display:flex;
+    justify-content:space-between;
+    font-size:11px;
+    color:#7b8496;
+    margin-bottom:6px;
+}
+
+.progress-bar{
+    height:6px;
+    background:#edf0f5;
+    border-radius:10px;
+    overflow:hidden;
+}
+
+.progress-bar div{
+    width:31%;
+    height:100%;
+    background:linear-gradient(90deg,#5c76ef,#8870d8);
+    transition:.4s;
+}
+
+.avatar{
+    width:35px;
+    height:35px;
+    border-radius:50%;
+    background:#eef2ff;
+    color:#5871ee;
+    display:grid;
+    place-items:center;
+    font-size:13px;
+    font-weight:700;
+}
+
+/* ===== 三栏 ===== */
+
+.main{
+    height:calc(100vh - 68px);
+    display:grid;
+    grid-template-columns:300px minmax(550px,1fr) 320px;
+}
+
+/* ===== 左侧 ===== */
+
+.left{
+    background:white;
+    border-right:1px solid #e2e6ee;
+    padding:20px 15px;
+    overflow:auto;
+}
+
+.lesson-card{
+    background:#fafbfe;
+    border:1px solid #e1e6ef;
+    border-radius:15px;
+    padding:15px;
+    margin-bottom:22px;
+}
+
+.lesson-card small{
+    color:#8a93a5;
+}
+
+.lesson-card h3{
+    margin:5px 0;
+    font-size:15px;
+}
+
+.section-title{
+    color:#9aa3b3;
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:.08em;
+    margin:5px 8px 12px;
+}
+
+.tree-node{
+    font-size:13px;
+}
+
+.tree-row{
+    min-height:40px;
+    display:flex;
+    align-items:center;
+    gap:7px;
+    padding:5px 7px;
+    border-radius:9px;
+    cursor:pointer;
+}
+
+.tree-row:hover{
+    background:#f6f8fc;
+}
+
+.tree-row.active{
+    background:#eef2ff;
+    color:#405bd7;
+    font-weight:700;
+}
+
+.arrow{
+    width:16px;
+    color:#9ca5b5;
+    text-align:center;
+}
+
+.tree-node.open > .tree-row .arrow{
+    transform:rotate(90deg);
+}
+
+.dot{
+    width:8px;
+    height:8px;
+    border-radius:50%;
+    border:1.5px solid #aeb7c7;
+}
+
+.tree-row.done .dot{
+    background:#22a777;
+    border-color:#22a777;
+}
+
+.children{
+    display:none;
+    margin-left:17px;
+    padding-left:7px;
+    border-left:1px solid #e4e8f0;
+}
+
+.tree-node.open > .children{
+    display:block;
+}
+
+.done-badge{
+    margin-left:auto;
+    font-size:9px;
+    background:#eaf8f2;
+    color:#17855e;
+    padding:3px 6px;
+    border-radius:10px;
+}
+
+/* ===== 中间 ===== */
+
+.center{
+    overflow:auto;
+    padding:28px 40px 100px;
+}
+
+.header{
+    max-width:930px;
+    margin:auto;
+}
+
+.eyebrow{
+    color:#5871ee;
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:.08em;
+}
+
+.header h1{
+    margin:7px 0;
+    font-size:28px;
+    letter-spacing:-.6px;
+}
+
+.header p{
+    margin:0 0 20px;
+    color:#7b8497;
+    font-size:13px;
+    line-height:1.8;
+}
+
+/* ===== 思维导图 ===== */
+
+.map-container{
+    max-width:930px;
+    margin:auto;
+    background:white;
+    border:1px solid #e1e6ef;
+    border-radius:23px;
+    padding:25px;
+    box-shadow:0 10px 35px rgba(30,43,76,.07);
+}
+
+.toolbar{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:23px;
+}
+
+.hint{
+    flex:1;
+    font-size:11px;
+    color:#7d8799;
+}
+
+.btn{
+    border:1px solid #e1e6ef;
+    background:white;
+    color:#687287;
+    border-radius:18px;
+    padding:7px 12px;
+    font-size:11px;
+}
+
+.btn:hover{
+    background:#f7f9fc;
+}
+
+.map{
+    min-height:350px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+}
+
+.root-node{
+    background:#172033;
+    color:white;
+    padding:13px 25px;
+    border-radius:14px;
+    font-weight:800;
+    box-shadow:0 8px 20px rgba(20,30,50,.18);
+}
+
+.vertical-line{
+    height:27px;
+    width:2px;
+    background:#dce1eb;
+}
+
+.level{
+    width:100%;
+    display:flex;
+    justify-content:center;
+    gap:14px;
+    position:relative;
+    margin-bottom:17px;
+}
+
+.level:before{
+    content:"";
+    position:absolute;
+    top:19px;
+    left:12%;
+    right:12%;
+    height:1px;
+    background:#dce1eb;
+}
+
+.map-card{
+    z-index:2;
+    width:170px;
+    min-height:78px;
+    background:white;
+    border:1px solid #dce3ef;
+    border-radius:13px;
+    padding:11px 12px;
+    box-shadow:0 5px 14px rgba(34,48,82,.05);
+    transition:.2s;
+    cursor:pointer;
+}
+
+.map-card:hover{
+    transform:translateY(-3px);
+    box-shadow:0 10px 22px rgba(34,48,82,.1);
+}
+
+.map-card.active{
+    border-color:#7186f3;
+    box-shadow:0 0 0 3px #edf0ff;
+}
+
+.map-card.locked{
+    background:#fafbfc;
+    border-style:dashed;
+    color:#a1a9b8;
+}
+
+.card-type{
+    font-size:9px;
+    color:#929bad;
+    margin-bottom:5px;
+}
+
+.card-title{
+    font-size:13px;
+    font-weight:750;
+}
+
+.card-desc{
+    font-size:10px;
+    color:#858fa1;
+    margin-top:5px;
+}
+
+.reveal{
+    animation:reveal .35s ease;
+}
+
+@keyframes reveal{
+    from{
+        opacity:0;
+        transform:translateY(10px);
+    }
+    to{
+        opacity:1;
+        transform:none;
+    }
+}
+
+/* ===== 详情 ===== */
+
+.detail{
+    max-width:930px;
+    margin:16px auto 0;
+    display:grid;
+    grid-template-columns:1.35fr .65fr;
+    gap:14px;
+}
+
+.panel{
+    background:white;
+    border:1px solid #e1e6ef;
+    border-radius:17px;
+    padding:19px;
+}
+
+.panel h2{
+    font-size:20px;
+    margin:4px 0 7px;
+}
+
+.kicker{
+    color:#5871ee;
+    font-size:10px;
+    font-weight:800;
+}
+
+.panel p{
+    color:#505b70;
+    font-size:13px;
+    line-height:1.8;
+}
+
+.teacher{
+    background:#fff6e7;
+    border:1px solid #f0dfbd;
+    border-radius:12px;
+    padding:12px;
+    margin-top:14px;
+}
+
+.teacher strong{
+    color:#99631f;
+    font-size:11px;
+}
+
+.teacher p{
+    margin:5px 0 0;
+    color:#765d38;
+    font-size:12px;
+}
+
+.actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:7px;
+    margin-top:14px;
+}
+
+.primary{
+    background:#5871ee;
+    color:white;
+    border:0;
+    border-radius:9px;
+    padding:8px 12px;
+    font-size:11px;
+    font-weight:700;
+}
+
+.secondary{
+    background:white;
+    color:#59647a;
+    border:1px solid #e1e6ef;
+    border-radius:9px;
+    padding:8px 12px;
+    font-size:11px;
+}
+
+.related{
+    border-bottom:1px solid #edf0f4;
+    padding:10px 0;
+    font-size:11px;
+    color:#59647a;
+    cursor:pointer;
+}
+
+.tag{
+    display:inline-block;
+    padding:4px 7px;
+    border-radius:15px;
+    background:#f0f2f7;
+    color:#667087;
+    font-size:10px;
+    margin:5px 4px 0 0;
+}
+
+.tag.orange{
+    background:#fff4e3;
+    color:#99631f;
+}
+
+.tag.purple{
+    background:#f1edff;
+    color:#6c55b4;
+}
+
+.tag.green{
+    background:#e9f8f1;
+    color:#197d59;
+}
+
+/* ===== 右侧 ===== */
+
+.right{
+    background:white;
+    border-left:1px solid #e2e6ee;
+    padding:20px;
+    overflow:auto;
+}
+
+.metric{
+    background:#f7f8fb;
+    border-radius:13px;
+    padding:13px;
+    margin-bottom:16px;
+}
+
+.metric-top{
+    display:flex;
+    justify-content:space-between;
+    color:#667187;
+    font-size:11px;
+}
+
+.metric strong{
+    display:block;
+    font-size:23px;
+    margin-top:3px;
+}
+
+.trace{
+    border:1px solid #e1e6ef;
+    border-radius:11px;
+    padding:9px 10px;
+    margin-bottom:8px;
+    font-size:11px;
+    cursor:pointer;
+}
+
+.trace.current{
+    border-color:#aab8ff;
+    background:#f7f8ff;
+}
+
+.trace small{
+    display:block;
+    color:#a0a8b7;
+    margin-top:4px;
+}
+
+.teacher-clue{
+    background:#fff9ee;
+    border:1px solid #f0dfbb;
+    border-radius:13px;
+    padding:12px;
+    margin-top:17px;
+}
+
+.teacher-clue strong{
+    color:#98631f;
+    font-size:11px;
+}
+
+.teacher-clue p{
+    color:#765e38;
+    font-size:11px;
+    line-height:1.6;
+}
+
+/* ===== 底部 ===== */
+
+.bottom{
+    position:fixed;
+    bottom:17px;
+    left:50%;
+    transform:translateX(-50%);
+    background:rgba(23,32,51,.96);
+    color:white;
+    border-radius:28px;
+    padding:8px 9px 8px 15px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    box-shadow:0 12px 30px rgba(20,28,46,.22);
+    z-index:20;
+}
+
+.bottom span{
+    color:#dce1ea;
+    font-size:11px;
+}
+
+.finish{
+    border:0;
+    background:white;
+    color:#172033;
+    border-radius:19px;
+    padding:8px 13px;
+    font-size:11px;
+    font-weight:750;
+}
+
+/* ===== Toast ===== */
+
+.toast{
+    position:fixed;
+    top:82px;
+    left:50%;
+    transform:translate(-50%,-8px);
+    opacity:0;
+    background:#172033;
+    color:white;
+    padding:9px 14px;
+    border-radius:9px;
+    font-size:11px;
+    transition:.25s;
+    z-index:50;
+}
+
+.toast.show{
+    opacity:1;
+    transform:translate(-50%,0);
+}
+
+/* ===== Modal ===== */
+
+.modal{
+    position:fixed;
+    inset:0;
+    background:rgba(20,28,44,.35);
+    display:none;
+    place-items:center;
+    z-index:100;
+}
+
+.modal.show{
+    display:grid;
+}
+
+.modal-box{
+    width:min(500px,calc(100vw - 40px));
+    background:white;
+    border-radius:18px;
+    padding:20px;
+}
+
+.modal-box h3{
+    margin:0 0 5px;
+}
+
+.modal-box p{
+    color:#697388;
+    font-size:12px;
+}
+
+textarea{
+    width:100%;
+    min-height:100px;
+    resize:vertical;
+    border:1px solid #e1e6ef;
+    border-radius:11px;
+    padding:10px;
+    outline:none;
+}
+
+@media(max-width:1050px){
+    .main{
+        grid-template-columns:260px 1fr;
+    }
+
+    .right{
+        display:none;
+    }
+}
+
+@media(max-width:750px){
+    .left{
+        display:none;
+    }
+
+    .main{
+        grid-template-columns:1fr;
+    }
+
+    .center{
+        padding:20px;
+    }
+
+    .detail{
+        grid-template-columns:1fr;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="topbar">
+
+    <div class="logo">
+        Course<span>Map</span>
+    </div>
+
+    <div class="course">
+        IELTS Reading · 课程导读
+    </div>
+
+    <div class="flex"></div>
+
+    <div class="progress">
+
+        <div class="progress-label">
+            <span>我的课程地图</span>
+            <b id="progressText">5 / 16</b>
+        </div>
+
+        <div class="progress-bar">
+            <div id="progressBar"></div>
+        </div>
+
+    </div>
+
+    <div class="avatar">我</div>
+
+</div>
+
+
+<div class="main">
+
+<!-- ================= 左侧课程树 ================= -->
+
+<aside class="left">
+
+    <div class="lesson-card">
+
+        <small>当前预习</small>
+
+        <h3>IELTS Reading 入门</h3>
+
+        <small>
+            约 78 分钟 · 16 个知识节点
+        </small>
+
+    </div>
+
+    <div class="section-title">
+        课程地图
+    </div>
+
+    <div id="tree"></div>
+
+</aside>
+
+
+<!-- ================= 中间 ================= -->
+
+<section class="center">
+
+    <div class="header">
+
+        <div class="eyebrow">
+            PREVIEW · 会生长的思维导图
+        </div>
+
+        <h1>
+            先把课程地图打开，再进入课堂
+        </h1>
+
+        <p>
+            像打开 XMind 一样一级一级探索。
+            每打开一个知识节点，地图就继续生长；
+            老师的重点、易错点和知识之间的关系，
+            会在恰当的位置出现。
+        </p>
+
+    </div>
+
+
+    <div class="map-container">
+
+        <div class="toolbar">
+
+            <span class="hint" id="hint">
+                点击一个节点，开始打开课程。
+            </span>
+
+            <button class="btn" onclick="expandAll()">
+                一键展开
+            </button>
+
+            <button class="btn" onclick="resetMap()">
+                重置
+            </button>
+
+        </div>
+
+        <div class="map" id="map"></div>
+
+    </div>
+
+
+    <div
+        class="detail"
+        id="detail"
+        style="display:none"
+    ></div>
+
+</section>
+
+
+<!-- ================= 右侧 ================= -->
+
+<aside class="right">
+
+    <div class="section-title">
+        我的探索轨迹
+    </div>
+
+    <div class="metric">
+
+        <div class="metric-top">
+            <span>地图已打开</span>
+            <span id="percent">31%</span>
+        </div>
+
+        <strong id="count">5</strong>
+
+        <small style="color:#9099aa">
+            个知识节点
+        </small>
+
+    </div>
+
+
+    <div id="traceList"></div>
+
+
+    <div class="teacher-clue">
+
+        <strong>
+            💡 老师留下的线索
+        </strong>
+
+        <p>
+            这些不是额外知识，而是老师在原课程里
+            特别强调、提醒或反复解释的地方。
+            随着地图展开，它们会逐渐出现。
+        </p>
+
+    </div>
+
+</aside>
+
+</div>
+
+
+<!-- ================= 底部 ================= -->
+
+<div class="bottom">
+
+    <span id="bottomText">
+        地图正在形成 · 继续打开知识节点
+    </span>
+
+    <button
+        class="finish"
+        onclick="finishPreview()"
+    >
+        完成预习 →
+    </button>
+
+</div>
+
+
+<div class="toast" id="toast"></div>
+
+
+<!-- ================= 问题弹窗 ================= -->
+
+<div class="modal" id="modal">
+
+    <div class="modal-box">
+
+        <h3>
+            留下一个预习问题
+        </h3>
+
+        <p id="modalDescription">
+            带着问题进入课堂，比提前把答案全部看完更有价值。
+        </p>
+
+        <textarea
+            id="noteInput"
+            placeholder="例如：为什么 False 和 Not Given 最容易混淆？"
+        ></textarea>
+
+        <div
+            class="actions"
+            style="justify-content:flex-end"
+        >
+
+            <button
+                class="secondary"
+                onclick="closeModal()"
+            >
+                取消
+            </button>
+
+            <button
+                class="primary"
+                onclick="saveQuestion()"
+            >
+                记录问题
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+/* =========================================================
+   课程知识树
+========================================================= */
+
+const COURSE = {
+
+    id:"root",
+    name:"IELTS Reading 入门",
+    type:"课程",
+
+    children:[
+
+        {
+            id:"exam",
+            name:"考试基本信息",
+            type:"知识模块",
+
+            desc:
+            "先建立考试全貌：考试时间、文章数量、题量和整体结构。",
+
+            teacher:
+            "老师提醒：先把考试结构弄清楚，后面的训练才知道自己在练什么。",
+
+            children:[
+
+                {
+                    id:"format",
+                    name:"考试结构",
+                    type:"知识点",
+
+                    desc:
+                    "3 篇文章 · 40 题 · 60 分钟。题目覆盖多种阅读能力。",
+
+                    teacher:
+                    "考试信息不是背诵任务，而是你安排训练节奏的坐标。"
+                },
+
+                {
+                    id:"genre",
+                    name:"文章类型",
+                    type:"知识点",
+
+                    desc:
+                    "课程会接触不同体裁与主题，不能依赖固定题材来猜答案。",
+
+                    teacher:
+                    "真正需要稳定的是阅读方法，而不是押文章主题。"
+                },
+
+                {
+                    id:"types",
+                    name:"题型地图",
+                    type:"知识点",
+
+                    desc:
+                    "定位替换、填空、T/F/NG、选择、匹配、段落信息匹配、标题等。",
+
+                    children:[
+
+                        {
+                            id:"tfng",
+                            name:"T / F / NG",
+                            type:"高频题型",
+
+                            desc:
+                            "判断题需要区分“与原文相反”和“原文没有给出”。",
+
+                            teacher:
+                            "敲黑板：False ≠ Not Given。不要因为没有看到原句就直接选 NG。"
+                        },
+
+                        {
+                            id:"fill",
+                            name:"填空题",
+                            type:"高频题型",
+
+                            desc:
+                            "从题干定位信息，再检查答案形式、词性和字数要求。"
+                        },
+
+                        {
+                            id:"match",
+                            name:"匹配题",
+                            type:"题型",
+
+                            desc:
+                            "不同匹配题的定位方式并不完全相同，需要先识别题型。"
+                        }
+
+                    ]
+                }
+
+            ]
+        },
+
+
+        {
+            id:"score",
+            name:"分数与目标",
+            type:"知识模块",
+
+            desc:
+            "把目标分数和正确题数建立联系，知道自己要做到什么程度。",
+
+            children:[
+
+                {
+                    id:"band7",
+                    name:"目标 7 分",
+                    type:"目标",
+
+                    desc:
+                    "目标不是“做完所有题”，而是建立稳定的正确率与方法。",
+
+                    teacher:
+                    "不要只盯最终分数。每一道错题都在告诉你能力结构哪里有缺口。"
+                },
+
+                {
+                    id:"accuracy",
+                    name:"正确率",
+                    type:"知识点",
+
+                    desc:
+                    "先追求稳定准确，再逐步压缩完成时间。"
+                }
+
+            ]
+        },
+
+
+        {
+            id:"method",
+            name:"备考方法",
+            type:"知识模块",
+
+            desc:
+            "老师把备考拆成语言能力、做题方法与合理计划三个部分。",
+
+            children:[
+
+                {
+                    id:"language",
+                    name:"语言能力",
+                    type:"能力",
+
+                    desc:
+                    "词汇、句法与长难句理解是底层基础。"
+                },
+
+                {
+                    id:"strategy",
+                    name:"做题方法",
+                    type:"能力",
+
+                    desc:
+                    "方法的作用是降低无效搜索，而不是替代阅读能力。"
+                },
+
+                {
+                    id:"plan",
+                    name:"训练计划",
+                    type:"能力",
+
+                    desc:
+                    "从准确到速度，从单项训练到整套模拟。",
+
+                    teacher:
+                    "敲黑板：不要一上来就疯狂计时。先保证做题质量。"
+                }
+
+            ]
+        },
+
+
+        {
+            id:"materials",
+            name:"课程与资料",
+            type:"知识模块",
+
+            desc:
+            "了解课程如何使用 Cambridge 真题与课堂作业。",
+
+            children:[
+
+                {
+                    id:"cambridge",
+                    name:"Cambridge 4–7",
+                    type:"资料",
+
+                    desc:
+                    "按照课程安排使用不同套题；较新的材料更适合后期模拟。"
+                },
+
+                {
+                    id:"homework",
+                    name:"作业反馈",
+                    type:"学习流程",
+
+                    desc:
+                    "完成作业后标记有问题的题目，提交给老师获得反馈。"
+                }
+
+            ]
+        }
+
+    ]
+};
+
+
+/* =========================================================
+   状态
+========================================================= */
+
+let allNodes=[];
+
+function flatten(node){
+
+    allNodes.push(node);
+
+    if(node.children){
+        node.children.forEach(flatten);
+    }
+}
+
+flatten(COURSE);
+
+
+/*
+ * 初始状态：
+ * 用户已经探索到 T/F/NG
+ */
+let opened = new Set([
+    "root",
+    "exam",
+    "format",
+    "types",
+    "tfng"
+]);
+
+let activeNode="tfng";
+
+let explorationHistory=[
+    "考试基本信息",
+    "考试结构",
+    "题型地图",
+    "T / F / NG"
+];
+
+let questions=[];
+
+
+/* =========================================================
+   工具
+========================================================= */
+
+function getNode(id){
+
+    return allNodes.find(
+        n=>n.id===id
+    );
+
+}
+
+
+function findParent(id,node=COURSE,parent=null){
+
+    if(node.id===id){
+        return parent;
+    }
+
+    if(node.children){
+
+        for(const child of node.children){
+
+            const result=
+                findParent(
+                    id,
+                    child,
+                    node
+                );
+
+            if(result){
+                return result;
+            }
+
+        }
+
+    }
+
+    return null;
+
+}
+
+
+/* =========================================================
+   左侧树
+========================================================= */
+
+function renderTree(){
+
+    const container=
+        document.getElementById("tree");
+
+    function build(node){
+
+        const hasChildren=
+            node.children &&
+            node.children.length>0;
+
+        const isOpen=
+            opened.has(node.id) ||
+            node.id==="root";
+
+        return `
+
+        <div class="tree-node ${isOpen?"open":""}">
+
+            <div
+                class="tree-row
+                ${activeNode===node.id?"active":""}
+                ${opened.has(node.id)?"done":""}"
+                onclick="selectNode('${node.id}')"
+            >
+
+                <span class="arrow">
+                    ${hasChildren?"›":""}
+                </span>
+
+                <span class="dot"></span>
+
+                <span>
+                    ${node.name}
+                </span>
+
+                ${
+                    opened.has(node.id)
+                    ?
+                    `<span class="done-badge">
+                        已打开
+                    </span>`
+                    :
+                    ""
+                }
+
+            </div>
+
+            ${
+                hasChildren
+                ?
+                `
+                <div class="children">
+
+                    ${node.children
+                        .map(build)
+                        .join("")
+                    }
+
+                </div>
+                `
+                :
+                ""
+            }
+
+        </div>
+
+        `;
+
+    }
+
+    container.innerHTML=
+        build(COURSE);
+
+}
+
+
+/* =========================================================
+   思维导图
+========================================================= */
+
+function createCard(node){
+
+    const locked=
+        node.children &&
+        node.children.length &&
+        !opened.has(node.id);
+
+    return `
+
+        <div
+            class="
+                map-card
+                ${activeNode===node.id?"active":""}
+                ${locked?"locked":""}
+            "
+            onclick="selectNode('${node.id}')"
+        >
+
+            <div class="card-type">
+                ${node.type}
+            </div>
+
+            <div class="card-title">
+                ${node.name}
+            </div>
+
+            <div class="card-desc">
+                ${
+                    opened.has(node.id)
+                    ?
+                    "点击查看内容"
+                    :
+                    "点击打开这一层"
+                }
+            </div>
+
+        </div>
+
+    `;
+
+}
+
+
+function renderMap(){
+
+    const map=
+        document.getElementById("map");
+
+    const current=
+        getNode(activeNode) ||
+        COURSE;
+
+    let html=`
+
+        <div class="root-node">
+            IELTS Reading 入门
+        </div>
+
+        <div class="vertical-line"></div>
+
+        <div class="level reveal">
+
+            ${
+                COURSE.children
+                .map(createCard)
+                .join("")
+            }
+
+        </div>
+
+    `;
+
+
+    /*
+     * 当前节点已经打开以后，
+     * 才显示下一层。
+     */
+
+    const children=
+        current.children || [];
+
+    const visibleChildren=
+        children.filter(
+            child=>opened.has(child.id)
+        );
+
+
+    if(
+        current.id!=="root" &&
+        visibleChildren.length
+    ){
+
+        html+=`
+
+            <div class="vertical-line"></div>
+
+            <div class="level reveal">
+
+                ${
+                    visibleChildren
+                    .map(createCard)
+                    .join("")
+                }
+
+            </div>
+
+        `;
+
+
+        /*
+         * 再向下一层生长
+         */
+
+        const nextLevel=
+            visibleChildren.flatMap(
+                node=>
+                    (node.children||[])
+                    .filter(
+                        child=>
+                            opened.has(child.id)
+                    )
+            );
+
+
+        if(nextLevel.length){
+
+            html+=`
+
+                <div class="vertical-line"></div>
+
+                <div class="level reveal">
+
+                    ${
+                        nextLevel
+                        .map(createCard)
+                        .join("")
+                    }
+
+                </div>
+
+            `;
+
+        }
+
+    }
+
+
+    map.innerHTML=html;
+
+
+    document.getElementById("hint").textContent=
+
+        opened.size>=allNodes.length
+
+        ?
+
+        "课程地图已经完整展开。你可以带着自己的问题进入网课。"
+
+        :
+
+        "点击节点 → 打开下一层 → 地图会继续生长。";
+
+}
+
+
+/* =========================================================
+   当前知识点详情
+========================================================= */
+
+function renderDetail(){
+
+    const container=
+        document.getElementById("detail");
+
+    const node=
+        getNode(activeNode);
+
+    if(!node){
+
+        container.style.display="none";
+        return;
+
+    }
+
+    container.style.display="grid";
+
+
+    const parent=
+        findParent(node.id);
+
+    let related=[];
+
+    if(parent){
+
+        related.push(parent);
+
+        if(parent.children){
+
+            related.push(
+                ...parent.children
+                    .filter(
+                        x=>x.id!==node.id
+                    )
+                    .slice(0,2)
+            );
+
+        }
+
+    }
+
+
+    container.innerHTML=`
+
+        <div class="panel reveal">
+
+            <div class="kicker">
+                ${node.type}
+            </div>
+
+            <h2>
+                ${node.name}
+            </h2>
+
+            <p>
+                ${node.desc ||
+                "这个知识节点将在课程地图中逐步展开。"}
+            </p>
+
+
+            ${
+                node.teacher
+                ?
+
+                `
+                <div class="teacher">
+
+                    <strong>
+                        👩‍🏫 老师重点
+                    </strong>
+
+                    <p>
+                        ${node.teacher}
+                    </p>
+
+                </div>
+                `
+
+                :
+
+                ""
+            }
+
+
+            <div class="actions">
+
+                ${
+                    node.children &&
+                    node.children.length
+
+                    ?
+
+                    `
+                    <button
+                        class="primary"
+                        onclick="openChildren('${node.id}')"
+                    >
+                        继续打开
+                        ${node.children.length}
+                        个子节点 →
+                    </button>
+                    `
+
+                    :
+
+                    ""
+                }
+
+
+                <button
+                    class="secondary"
+                    onclick="askQuestion('${node.id}')"
+                >
+                    ＋ 留下一个预习问题
+                </button>
+
+
+                ${
+                    node.teacher
+                    ?
+
+                    `
+                    <button
+                        class="secondary"
+                        onclick="showToast('已标记为老师重点')"
+                    >
+                        ★ 标记重点
+                    </button>
+                    `
+
+                    :
+
+                    ""
+                }
+
+            </div>
+
+        </div>
+
+
+        <div class="panel reveal">
+
+            <div
+                style="
+                    font-size:11px;
+                    font-weight:800;
+                    margin-bottom:7px;
+                "
+            >
+                这个节点还连接着
+            </div>
+
+
+            ${
+                related.length
+
+                ?
+
+                related.map(
+                    r=>`
+
+                    <div
+                        class="related"
+                        onclick="selectNode('${r.id}')"
+                    >
+
+                        ↗ ${r.name}
+
+                        <span
+                            style="
+                                float:right;
+                                color:#a0a8b7
+                            "
+                        >
+                            查看
+                        </span>
+
+                    </div>
+
+                    `
+                ).join("")
+
+                :
+
+                `
+                <div
+                    style="
+                        font-size:11px;
+                        color:#9099aa;
+                    "
+                >
+                    继续展开后，
+                    这里会出现知识之间的关系。
+                </div>
+                `
+            }
+
+
+            <div
+                style="
+                    margin-top:14px;
+                    font-size:11px;
+                    font-weight:800;
+                "
+            >
+                节点标签
+            </div>
+
+
+            <span class="tag">
+                知识点
+            </span>
+
+
+            ${
+                node.teacher
+                ?
+                `
+                <span class="tag orange">
+                    老师重点
+                </span>
+                `
+                :
+                ""
+            }
+
+
+            ${
+                node.id==="tfng"
+                ?
+                `
+                <span class="tag purple">
+                    易错点
+                </span>
+                `
+                :
+                ""
+            }
+
+
+            ${
+                ["tfng","fill"].includes(node.id)
+                ?
+                `
+                <span class="tag green">
+                    考试高频
+                </span>
+                `
+                :
+                ""
+            }
+
+        </div>
+
+    `;
+
+}
+
+
+/* =========================================================
+   探索轨迹
+========================================================= */
+
+function renderHistory(){
+
+    const container=
+        document.getElementById("traceList");
+
+    const unique=
+        [...new Set(explorationHistory)]
+        .slice(-7)
+        .reverse();
+
+
+    container.innerHTML=
+
+        unique.map(
+            (name,index)=>`
+
+            <div
+                class="
+                    trace
+                    ${index===0?"current":""}
+                "
+                onclick="jumpHistory('${name}')"
+            >
+
+                ✓ ${name}
+
+                <small>
+                    ${index===0?"刚刚探索":"已探索"}
+                </small>
+
+            </div>
+
+            `
+        ).join("");
+
+}
+
+
+/* =========================================================
+   进度
+========================================================= */
+
+function renderProgress(){
+
+    const total=
+        allNodes.length-1;
+
+    const count=
+        Math.min(
+            total,
+            opened.size-1
+        );
+
+    const percent=
+        Math.round(
+            count/total*100
+        );
+
+
+    document.getElementById(
+        "progressText"
+    ).textContent=
+        `${count} / ${total}`;
+
+
+    document.getElementById(
+        "progressBar"
+    ).style.width=
+        percent+"%";
+
+
+    document.getElementById(
+        "count"
+    ).textContent=count;
+
+
+    document.getElementById(
+        "percent"
+    ).textContent=
+        percent+"%";
+
+
+    document.getElementById(
+        "bottomText"
+    ).textContent=
+
+        percent>=100
+
+        ?
+
+        "✓ 课程地图已完整形成 · 可以进入网课"
+
+        :
+
+        "地图正在形成 · 继续打开知识节点";
+
+}
+
+
+/* =========================================================
+   总刷新
+========================================================= */
+
+function render(){
+
+    renderTree();
+
+    renderMap();
+
+    renderDetail();
+
+    renderHistory();
+
+    renderProgress();
+
+}
+
+
+/* =========================================================
+   点击节点
+========================================================= */
+
+function selectNode(id){
+
+    const node=
+        getNode(id);
+
+    if(!node){
+        return;
+    }
+
+
+    activeNode=id;
+
+
+    /*
+     * 第一次点击未打开节点：
+     * 自动打开它
+     */
+
+    if(
+        id!=="root" &&
+        !opened.has(id)
+    ){
+
+        opened.add(id);
+
+        explorationHistory.push(
+            node.name
+        );
+
+        showToast(
+            `已打开「${node.name}」 · 地图继续生长`
+        );
+
+    }
+    else if(id!=="root"){
+
+        explorationHistory.push(
+            node.name
+        );
+
+    }
+
+
+    render();
+
+}
+
+
+/* =========================================================
+   打开当前节点下一层
+========================================================= */
+
+function openChildren(id){
+
+    const node=
+        getNode(id);
+
+    if(!node){
+        return;
+    }
+
+
+    (node.children||[])
+        .forEach(
+            child=>{
+                opened.add(child.id);
+            }
+        );
+
+
+    explorationHistory.push(
+        ...(node.children||[])
+            .map(x=>x.name)
+    );
+
+
+    showToast(
+        `发现 ${node.children?.length||0} 个新知识节点`
+    );
+
+
+    render();
+
+}
+
+
+/* =========================================================
+   一键展开
+========================================================= */
+
+function expandAll(){
+
+    allNodes.forEach(
+        node=>{
+            opened.add(node.id);
+        }
+    );
+
+
+    showToast(
+        "整张课程地图已经展开"
+    );
+
+
+    render();
+
+}
+
+
+/* =========================================================
+   重置
+========================================================= */
+
+function resetMap(){
+
+    opened=
+        new Set(["root"]);
+
+    activeNode="root";
+
+    explorationHistory=[
+        "开始探索课程地图"
+    ];
+
+    questions=[];
+
+    render();
+
+    showToast(
+        "已重置，可以重新探索"
+    );
+
+}
+
+
+/* =========================================================
+   从探索轨迹跳转
+========================================================= */
+
+function jumpHistory(name){
+
+    const node=
+        allNodes.find(
+            x=>x.name===name
+        );
+
+    if(!node){
+        return;
+    }
+
+    activeNode=node.id;
+
+    opened.add(node.id);
+
+    render();
+
+}
+
+
+/* =========================================================
+   预习问题
+========================================================= */
+
+function askQuestion(id){
+
+    activeNode=id;
+
+    const node=
+        getNode(id);
+
+    document.getElementById(
+        "modalDescription"
+    ).textContent=
+        `关于「${node.name}」，你最想带进课堂的问题是什么？`;
+
+
+    document.getElementById(
+        "noteInput"
+    ).value="";
+
+
+    document.getElementById(
+        "modal"
+    ).classList.add("show");
+
+
+    setTimeout(
+        ()=>{
+            document
+                .getElementById("noteInput")
+                .focus();
+        },
+        50
+    );
+
+}
+
+
+function closeModal(){
+
+    document
+        .getElementById("modal")
+        .classList.remove("show");
+
+}
+
+
+function saveQuestion(){
+
+    const value=
+        document
+            .getElementById("noteInput")
+            .value
+            .trim();
+
+
+    if(!value){
+        return;
+    }
+
+
+    questions.push({
+
+        node:activeNode,
+
+        text:value
+
+    });
+
+
+    closeModal();
+
+
+    showToast(
+        "问题已记录 · 上课时会自动绑定到这个知识节点"
+    );
+
+}
+
+
+/* =========================================================
+   Toast
+========================================================= */
+
+let toastTimer;
+
+function showToast(message){
+
+    const toast=
+        document.getElementById("toast");
+
+    toast.textContent=message;
+
+    toast.classList.add("show");
+
+    clearTimeout(toastTimer);
+
+    toastTimer=
+        setTimeout(
+            ()=>{
+                toast.classList.remove("show");
+            },
+            1800
+        );
+
+}
+
+
+/* =========================================================
+   完成预习
+========================================================= */
+
+function finishPreview(){
+
+    const total=
+        allNodes.length-1;
+
+    const count=
+        opened.size-1;
+
+
+    if(count<total){
+
+        showToast(
+            `还剩 ${total-count} 个节点没有打开`
+        );
+
+    }
+    else{
+
+        showToast(
+            "预习完成 ✓ 带着课程地图进入网课"
+        );
+
+
+        document.getElementById(
+            "bottomText"
+        ).textContent=
+            "预习完成 · 进入网课 →";
+
+    }
+
+}
+
+
+/* =========================================================
+   点击遮罩关闭
+========================================================= */
+
+document
+    .getElementById("modal")
+    .addEventListener(
+        "click",
+        function(e){
+
+            if(
+                e.target.id==="modal"
+            ){
+
+                closeModal();
+
+            }
+
+        }
+    );
+
+
+/* =========================================================
+   初始化
+========================================================= */
+
+render();
+
+</script>
+
+</body>
+</html>

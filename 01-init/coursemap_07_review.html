@@ -1,0 +1,2522 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>CourseMap · 课程探索</title>
+
+<style>
+*{
+    box-sizing:border-box;
+}
+
+:root{
+    --bg:#f7f8fa;
+    --panel:#fff;
+    --text:#202124;
+    --muted:#73777d;
+    --line:#dfe3e8;
+    --blue:#3b82f6;
+    --blue-light:#eff6ff;
+    --orange:#f59e0b;
+}
+
+html,body{
+    margin:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        "PingFang SC",
+        "Microsoft YaHei",
+        sans-serif;
+    color:var(--text);
+    background:var(--bg);
+}
+
+/* =====================================================
+   TOP
+===================================================== */
+
+.topbar{
+    height:64px;
+    background:rgba(255,255,255,.95);
+    border-bottom:1px solid var(--line);
+    display:flex;
+    align-items:center;
+    padding:0 26px;
+    position:relative;
+    z-index:100;
+}
+
+.logo{
+    font-size:18px;
+    font-weight:700;
+}
+
+.logo span{
+    color:var(--blue);
+}
+
+.course-title{
+    margin-left:32px;
+    color:#666;
+    font-size:14px;
+}
+
+.course-title strong{
+    color:#222;
+}
+
+.top-actions{
+    margin-left:auto;
+    display:flex;
+    gap:8px;
+}
+
+.icon-btn{
+    width:36px;
+    height:36px;
+    border:0;
+    background:transparent;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:17px;
+    color:#686d73;
+}
+
+.icon-btn:hover{
+    background:#f1f3f5;
+}
+
+/* =====================================================
+   MAIN
+===================================================== */
+
+.main{
+    height:calc(100vh - 64px);
+    display:grid;
+    grid-template-columns:235px minmax(500px,1fr) 320px;
+}
+
+/* =====================================================
+   LEFT
+===================================================== */
+
+.sidebar{
+    background:#fbfbfc;
+    border-right:1px solid var(--line);
+    padding:20px 14px;
+    overflow:auto;
+}
+
+.section-title{
+    font-size:11px;
+    color:#9aa0a6;
+    letter-spacing:1px;
+    padding:0 10px 12px;
+}
+
+.tree-item{
+    min-height:38px;
+    display:flex;
+    align-items:center;
+    gap:9px;
+    padding:6px 10px;
+    border-radius:8px;
+    font-size:13px;
+    color:#555;
+    cursor:pointer;
+}
+
+.tree-item:hover{
+    background:#f0f3f7;
+}
+
+.tree-item.active{
+    background:#eaf2ff;
+    color:#2563eb;
+    font-weight:600;
+}
+
+.tree-child{
+    padding-left:37px;
+}
+
+.tree-dot{
+    width:6px;
+    height:6px;
+    border-radius:50%;
+    background:#c9cdd2;
+}
+
+.tree-item.active .tree-dot{
+    background:#3b82f6;
+}
+
+/* =====================================================
+   CANVAS
+===================================================== */
+
+.canvas{
+    position:relative;
+    overflow:hidden;
+    background:
+        radial-gradient(
+            circle at 50% 50%,
+            rgba(59,130,246,.035),
+            transparent 45%
+        );
+}
+
+/* 无限画布 */
+
+.infinite-canvas{
+    position:absolute;
+    inset:0;
+    overflow:hidden;
+    cursor:grab;
+}
+
+.infinite-canvas.dragging{
+    cursor:grabbing;
+}
+
+/* =====================================================
+   GRID
+===================================================== */
+
+.grid{
+    position:absolute;
+    width:100%;
+    height:100%;
+    left:0;
+    top:0;
+    pointer-events:none;
+
+    background-image:
+        linear-gradient(
+            rgba(0,0,0,.025) 1px,
+            transparent 1px
+        ),
+        linear-gradient(
+            90deg,
+            rgba(0,0,0,.025) 1px,
+            transparent 1px
+        );
+
+    background-size:32px 32px;
+}
+
+/* =====================================================
+   WORLD
+===================================================== */
+
+.world{
+    position:absolute;
+    left:0;
+    top:0;
+    width:2400px;
+    height:1600px;
+    transform-origin:0 0;
+}
+
+/* =====================================================
+   SVG CONNECTIONS
+===================================================== */
+
+.connections{
+    position:absolute;
+    left:0;
+    top:0;
+    width:2400px;
+    height:1600px;
+    pointer-events:none;
+    overflow:visible;
+}
+
+.connection{
+    fill:none;
+    stroke:#d8dde4;
+    stroke-width:2;
+    transition:
+        stroke .2s,
+        stroke-width .2s;
+}
+
+.connection.teacher{
+    stroke:#b7c9e8;
+}
+
+.connection.active{
+    stroke:#9dbdf4;
+    stroke-width:2.5;
+}
+
+/* =====================================================
+   NODES
+===================================================== */
+
+.node{
+    position:absolute;
+    min-width:138px;
+    max-width:190px;
+
+    padding:13px 18px;
+
+    background:rgba(255,255,255,.97);
+    border:1px solid #dfe4ea;
+    border-radius:12px;
+
+    box-shadow:
+        0 4px 16px rgba(0,0,0,.04);
+
+    cursor:pointer;
+    user-select:none;
+
+    transition:
+        box-shadow .2s,
+        border-color .2s,
+        transform .15s;
+
+    z-index:5;
+}
+
+.node:hover{
+    border-color:#b7c5d8;
+    box-shadow:
+        0 10px 28px rgba(0,0,0,.09);
+}
+
+.node.dragging-node{
+    cursor:grabbing;
+    box-shadow:
+        0 18px 40px rgba(0,0,0,.14);
+    z-index:30;
+}
+
+.node.root{
+    min-width:210px;
+    padding:18px 24px;
+    text-align:center;
+
+    background:#202b3c;
+    color:white;
+    border-color:#202b3c;
+
+    box-shadow:
+        0 12px 32px rgba(32,43,60,.20);
+}
+
+.node-title{
+    font-size:14px;
+    font-weight:600;
+    line-height:1.4;
+}
+
+.node-meta{
+    margin-top:5px;
+    color:#9298a0;
+    font-size:11px;
+}
+
+.node.root .node-meta{
+    color:rgba(255,255,255,.62);
+}
+
+.node.hidden{
+    opacity:0;
+    pointer-events:none;
+    transform:scale(.82);
+}
+
+.node.show{
+    animation:
+        nodeIn .38s cubic-bezier(.2,.8,.2,1);
+}
+
+@keyframes nodeIn{
+    from{
+        opacity:0;
+        transform:scale(.82);
+    }
+    to{
+        opacity:1;
+        transform:scale(1);
+    }
+}
+
+/* =====================================================
+   TEACHER MARK
+===================================================== */
+
+.teacher-mark{
+    position:absolute;
+    right:-7px;
+    top:-8px;
+
+    width:22px;
+    height:22px;
+
+    border-radius:50%;
+
+    background:var(--orange);
+    color:white;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:12px;
+
+    box-shadow:
+        0 3px 8px rgba(245,158,11,.3);
+}
+
+.teacher-mark::after{
+    content:"";
+    position:absolute;
+    inset:-4px;
+    border-radius:50%;
+    border:1px solid rgba(245,158,11,.25);
+    animation:pulse 2.2s infinite;
+}
+
+@keyframes pulse{
+    0%{
+        transform:scale(.8);
+        opacity:.7;
+    }
+
+    70%{
+        transform:scale(1.4);
+        opacity:0;
+    }
+
+    100%{
+        opacity:0;
+    }
+}
+
+/* =====================================================
+   CANVAS STATUS
+===================================================== */
+
+.map-status{
+    position:absolute;
+    left:22px;
+    top:18px;
+    z-index:50;
+
+    font-size:12px;
+    color:#999;
+
+    pointer-events:none;
+}
+
+.map-status strong{
+    color:#555;
+}
+
+/* =====================================================
+   ZOOM CONTROL
+===================================================== */
+
+.zoom-control{
+    position:absolute;
+    right:20px;
+    bottom:20px;
+    z-index:60;
+
+    display:flex;
+    align-items:center;
+
+    background:rgba(255,255,255,.94);
+    border:1px solid #e1e5e9;
+    border-radius:10px;
+
+    box-shadow:
+        0 5px 20px rgba(0,0,0,.06);
+
+    overflow:hidden;
+}
+
+.zoom-control button{
+    width:34px;
+    height:34px;
+
+    border:0;
+    background:white;
+
+    cursor:pointer;
+
+    color:#555;
+    font-size:16px;
+}
+
+.zoom-control button:hover{
+    background:#f3f5f7;
+}
+
+.zoom-value{
+    width:52px;
+    text-align:center;
+    font-size:11px;
+    color:#777;
+}
+
+/* =====================================================
+   COMPLETE
+===================================================== */
+
+.complete{
+    position:absolute;
+    right:90px;
+    bottom:22px;
+
+    padding:10px 14px;
+
+    background:rgba(255,255,255,.94);
+    border:1px solid #e0e4e8;
+    border-radius:10px;
+
+    font-size:12px;
+    color:#666;
+
+    opacity:0;
+    transform:translateY(8px);
+
+    pointer-events:none;
+
+    transition:.35s;
+}
+
+.complete.visible{
+    opacity:1;
+    transform:translateY(0);
+}
+
+.complete strong{
+    color:#222;
+}
+
+/* =====================================================
+   RIGHT
+===================================================== */
+
+.detail{
+    background:rgba(255,255,255,.97);
+    border-left:1px solid var(--line);
+    padding:24px;
+    overflow:auto;
+}
+
+.detail-empty{
+    height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#aaa;
+}
+
+.detail-header{
+    display:none;
+}
+
+.detail.active .detail-header{
+    display:block;
+}
+
+.detail-kicker{
+    font-size:11px;
+    color:#3b82f6;
+    font-weight:600;
+    margin-bottom:7px;
+}
+
+.detail-title{
+    font-size:21px;
+    line-height:1.35;
+    font-weight:700;
+    margin-bottom:12px;
+}
+
+.detail-desc{
+    color:#666;
+    font-size:13px;
+    line-height:1.8;
+}
+
+.detail-section{
+    margin-top:25px;
+}
+
+.detail-section-title{
+    font-size:12px;
+    color:#8b9198;
+    margin-bottom:10px;
+}
+
+.insight-card{
+    padding:13px 14px;
+
+    background:#fff7e6;
+    border:1px solid #fde3a7;
+    border-radius:10px;
+
+    color:#674b13;
+    font-size:13px;
+    line-height:1.7;
+}
+
+.tag-list{
+    display:flex;
+    flex-wrap:wrap;
+    gap:7px;
+}
+
+.tag{
+    padding:5px 8px;
+    background:#f1f3f5;
+    border-radius:6px;
+    font-size:11px;
+    color:#666;
+}
+
+.quote{
+    border-left:3px solid #d6dbe2;
+    padding-left:12px;
+
+    color:#72777e;
+    font-size:12px;
+    line-height:1.7;
+}
+
+.timestamp{
+    display:flex;
+    align-items:center;
+    gap:8px;
+
+    padding:10px 12px;
+
+    background:#f6f8fa;
+    border-radius:8px;
+
+    font-size:12px;
+    color:#4b5563;
+
+    cursor:pointer;
+}
+
+.timestamp:hover{
+    background:#edf2f7;
+}
+
+.play{
+    width:23px;
+    height:23px;
+    border-radius:50%;
+
+    background:#3b82f6;
+    color:white;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:9px;
+}
+
+.video-preview{
+    margin-top:24px;
+    height:120px;
+
+    border-radius:10px;
+    background:#20242b;
+
+    position:relative;
+    cursor:pointer;
+    overflow:hidden;
+}
+
+.video-play{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+
+    width:42px;
+    height:42px;
+
+    border-radius:50%;
+    background:white;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:13px;
+}
+
+.video-time{
+    position:absolute;
+    bottom:9px;
+    right:10px;
+
+    color:white;
+    font-size:10px;
+    opacity:.8;
+}
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media(max-width:1100px){
+
+    .main{
+        grid-template-columns:200px 1fr;
+    }
+
+    .detail{
+        display:none;
+    }
+}
+
+@media(max-width:760px){
+
+    .sidebar{
+        display:none;
+    }
+
+    .main{
+        grid-template-columns:1fr;
+    }
+
+    .course-title{
+        display:none;
+    }
+}
+</style>
+</head>
+
+
+<body>
+
+<!-- =====================================================
+     TOP
+===================================================== -->
+
+<header class="topbar">
+
+    <div class="logo">
+        Course<span>Map</span>
+    </div>
+
+    <div class="course-title">
+        IELTS Reading · <strong>课程探索</strong>
+    </div>
+
+    <div class="top-actions">
+
+        <button class="icon-btn">
+            ⌕
+        </button>
+
+        <button class="icon-btn">
+            ⚙
+        </button>
+
+    </div>
+
+</header>
+
+
+<!-- =====================================================
+     MAIN
+===================================================== -->
+
+<main class="main">
+
+
+<!-- =====================================================
+     LEFT
+===================================================== -->
+
+<aside class="sidebar">
+
+    <div class="section-title">
+        COURSE
+    </div>
+
+    <div
+        class="tree-item active"
+        data-target="root"
+    >
+        <div class="tree-icon">◈</div>
+        <div>IELTS Reading 入门</div>
+    </div>
+
+    <div
+        class="tree-item tree-child"
+        data-target="exam"
+    >
+        <div class="tree-dot"></div>
+        <div>考试基础</div>
+    </div>
+
+    <div
+        class="tree-item tree-child"
+        data-target="types"
+    >
+        <div class="tree-dot"></div>
+        <div>题型体系</div>
+    </div>
+
+    <div
+        class="tree-item tree-child"
+        data-target="score"
+    >
+        <div class="tree-dot"></div>
+        <div>分数与目标</div>
+    </div>
+
+    <div
+        class="tree-item tree-child"
+        data-target="plan"
+    >
+        <div class="tree-dot"></div>
+        <div>备考路径</div>
+    </div>
+
+    <div style="height:24px"></div>
+
+    <div class="section-title">
+        DISCOVERED
+    </div>
+
+    <div class="tree-item tree-child">
+        <div class="tree-dot"></div>
+        <div>老师重点</div>
+    </div>
+
+    <div class="tree-item tree-child">
+        <div class="tree-dot"></div>
+        <div>易错点</div>
+    </div>
+
+    <div class="tree-item tree-child">
+        <div class="tree-dot"></div>
+        <div>考试高频</div>
+    </div>
+
+</aside>
+
+
+<!-- =====================================================
+     CENTER CANVAS
+===================================================== -->
+
+<section class="canvas">
+
+    <div class="map-status">
+        <strong>IELTS Reading 入门</strong>
+    </div>
+
+
+    <!-- 无限画布 -->
+
+    <div
+        class="infinite-canvas"
+        id="infiniteCanvas"
+    >
+
+        <div class="grid"></div>
+
+        <div
+            class="world"
+            id="world"
+        >
+
+            <svg
+                class="connections"
+                id="connections"
+                viewBox="0 0 2400 1600"
+                preserveAspectRatio="none"
+            ></svg>
+
+
+            <!-- ROOT -->
+
+            <div
+                class="node root"
+                id="root"
+                data-node="root"
+                style="left:1000px;top:720px"
+            >
+
+                <div>
+                    IELTS Reading 入门
+                </div>
+
+                <div class="node-meta">
+                    Reading Orientation
+                </div>
+
+            </div>
+
+
+            <!-- LEVEL 1 -->
+
+            <div
+                class="node hidden"
+                id="exam"
+                data-node="exam"
+                style="left:590px;top:500px"
+            >
+
+                <div class="node-title">
+                    考试基础
+                </div>
+
+                <div class="node-meta">
+                    结构 · 时间 · 难度
+                </div>
+
+            </div>
+
+
+            <div
+                class="node hidden"
+                id="types"
+                data-node="types"
+                style="left:1390px;top:430px"
+            >
+
+                <div class="node-title">
+                    题型体系
+                </div>
+
+                <div class="node-meta">
+                    8 类核心题型
+                </div>
+
+            </div>
+
+
+            <div
+                class="node hidden"
+                id="score"
+                data-node="score"
+                style="left:1450px;top:820px"
+            >
+
+                <div class="node-title">
+                    分数与目标
+                </div>
+
+                <div class="node-meta">
+                    7 · 6.5 · 6
+                </div>
+
+            </div>
+
+
+            <div
+                class="node hidden"
+                id="plan"
+                data-node="plan"
+                style="left:590px;top:900px"
+            >
+
+                <div class="node-title">
+                    备考路径
+                </div>
+
+                <div class="node-meta">
+                    能力 · 方法 · 计划
+                </div>
+
+            </div>
+
+
+            <!-- LEVEL 2 -->
+
+            <div
+                class="node hidden"
+                id="fill"
+                data-node="fill"
+                style="left:1710px;top:260px"
+            >
+
+                <div class="node-title">
+                    填空题
+                </div>
+
+                <div class="node-meta">
+                    Sentence / Summary
+                </div>
+
+            </div>
+
+
+            <div
+                class="node hidden"
+                id="tfng"
+                data-node="tfng"
+                style="left:1850px;top:440px"
+            >
+
+                <div class="teacher-mark">
+                    !
+                </div>
+
+                <div class="node-title">
+                    T / F / NG
+                </div>
+
+                <div class="node-meta">
+                    判断题
+                </div>
+
+            </div>
+
+
+            <div
+                class="node hidden"
+                id="matching"
+                data-node="matching"
+                style="left:1810px;top:630px"
+            >
+
+                <div class="node-title">
+                    Matching
+                </div>
+
+                <div class="node-meta">
+                    匹配题
+                </div>
+
+            </div>
+
+
+            <div
+                class="node hidden"
+                id="heading"
+                data-node="heading"
+                style="left:1710px;top:850px"
+            >
+
+                <div class="node-title">
+                    Heading
+                </div>
+
+                <div class="node-meta">
+                    段落信息匹配
+                </div>
+
+            </div>
+
+
+            <!-- LEVEL 3 -->
+
+            <div
+                class="node hidden"
+                id="true"
+                data-node="true"
+                style="left:1880px;top:250px"
+            >
+
+                <div class="node-title">
+                    TRUE
+                </div>
+
+                <div class="node-meta">
+                    原文支持
+                </div>
+
+            </div>
+
+
+            <div
+                class="node hidden"
+                id="false"
+                data-node="false"
+                style="left:2050px;top:400px"
+            >
+
+                <div class="node-title">
+                    FALSE
+                </div>
+
+                <div class="node-meta">
+                    原文相反
+                </div>
+
+            </div>
+
+
+            <div
+                class="node hidden"
+                id="ng"
+                data-node="ng"
+                style="left:2050px;top:550px"
+            >
+
+                <div class="teacher-mark">
+                    !
+                </div>
+
+                <div class="node-title">
+                    NOT GIVEN
+                </div>
+
+                <div class="node-meta">
+                    原文没有信息
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ZOOM -->
+
+    <div class="zoom-control">
+
+        <button id="zoomOut">
+            −
+        </button>
+
+        <div
+            class="zoom-value"
+            id="zoomValue"
+        >
+            100%
+        </div>
+
+        <button id="zoomIn">
+            +
+        </button>
+
+    </div>
+
+
+    <div
+        class="complete"
+        id="complete"
+    >
+        <strong>课程地图已形成</strong>
+        <span> · 可以进入网课</span>
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     RIGHT DETAIL
+===================================================== -->
+
+<aside
+    class="detail"
+    id="detail"
+>
+
+    <div
+        class="detail-empty"
+        id="emptyDetail"
+    >
+    </div>
+
+
+    <div
+        class="detail-header"
+        id="detailContent"
+    >
+
+        <div
+            class="detail-kicker"
+            id="detailKicker"
+        >
+            KNOWLEDGE POINT
+        </div>
+
+
+        <div
+            class="detail-title"
+            id="detailTitle"
+        >
+        </div>
+
+
+        <div
+            class="detail-desc"
+            id="detailDesc"
+        >
+        </div>
+
+
+        <div
+            class="detail-section"
+            id="insightSection"
+            style="display:none"
+        >
+
+            <div class="detail-section-title">
+                老师特别强调
+            </div>
+
+            <div
+                class="insight-card"
+                id="insight"
+            >
+            </div>
+
+        </div>
+
+
+        <div class="detail-section">
+
+            <div class="detail-section-title">
+                课程原文
+            </div>
+
+            <div
+                class="quote"
+                id="quote"
+            >
+            </div>
+
+        </div>
+
+
+        <div class="detail-section">
+
+            <div class="detail-section-title">
+                相关内容
+            </div>
+
+            <div
+                class="tag-list"
+                id="tags"
+            >
+            </div>
+
+        </div>
+
+
+        <div class="detail-section">
+
+            <div
+                class="timestamp"
+                id="timestamp"
+            >
+
+                <div class="play">
+                    ▶
+                </div>
+
+                <div>
+
+                    <div>
+                        跳到课程原文
+                    </div>
+
+                    <div
+                        id="timeText"
+                        style="
+                        color:#9298a0;
+                        margin-top:2px
+                        "
+                    >
+                        00:00
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div
+            class="video-preview"
+            id="videoPreview"
+        >
+
+            <div class="video-play">
+                ▶
+            </div>
+
+            <div
+                class="video-time"
+                id="videoTime"
+            >
+                00:00
+            </div>
+
+        </div>
+
+    </div>
+
+</aside>
+
+</main>
+
+
+<script>
+
+/* =========================================================
+   DATA
+========================================================= */
+
+const DATA={
+
+root:{
+title:"IELTS Reading 入门",
+kicker:"COURSE",
+desc:"这节课从考试结构、题型体系、分数目标和备考路径四个方向，建立 IELTS Reading 的整体认识。",
+quote:"Reading 不是单纯考词汇量，而是语言能力、方法技巧和备考计划的综合。",
+tags:["考试认知","课程总览"],
+time:"00:00"
+},
+
+exam:{
+title:"考试基础",
+kicker:"EXAM BASICS",
+desc:"Reading 由 3 篇文章、40 道题组成。文章体裁、难度和题目组合会产生变化。",
+quote:"雅思阅读一共是三个 passage，40 道题，时间是一个小时。",
+tags:["3 passages","40 questions","60 minutes"],
+time:"04:32"
+},
+
+types:{
+title:"题型体系",
+kicker:"QUESTION TYPES",
+desc:"课程将常见题型拆开讲解，其中判断题、填空题以及匹配类题型是后续学习的核心。",
+quote:"我们后面会把这些题型一个一个拆开，大家一定要知道每种题型到底是在考什么。",
+tags:["填空","T/F/NG","Matching","Heading"],
+time:"08:46"
+},
+
+score:{
+title:"分数与目标",
+kicker:"BAND SCORE",
+desc:"不同目标分数对应不同的正确题数要求。",
+quote:"如果你的目标是 7 分，那么你需要对自己的正确率有一个比较明确的要求。",
+tags:["Band 7","Band 6.5","Band 6"],
+time:"15:20"
+},
+
+plan:{
+title:"备考路径",
+kicker:"STUDY PLAN",
+desc:"老师将备考拆成语言能力、做题方法和合理计划三个部分。",
+quote:"我们学习雅思阅读，其实就是三个东西：语言能力、方法技巧，以及合理的学习计划。",
+tags:["语言能力","方法技巧","学习计划"],
+time:"19:10"
+},
+
+fill:{
+title:"填空题",
+kicker:"QUESTION TYPE",
+desc:"根据题目要求，从原文中定位并填写对应信息。",
+quote:"填空题非常重要，因为它是我们后面做定位训练的基础。",
+tags:["定位","同义替换"],
+time:"25:16"
+},
+
+tfng:{
+title:"T / F / NG",
+kicker:"QUESTION TYPE",
+desc:"判断题要求区分原文支持、原文相反，以及原文没有提供相关信息三种情况。",
+insight:"False 和 Not Given 是很多同学最容易混淆的地方。老师在课程中特别强调：没有信息 ≠ 错误。",
+quote:"最容易出问题的就是 False 和 Not Given。大家一定要把这两个概念分清楚。",
+tags:["高频","易错","判断逻辑"],
+time:"31:42"
+},
+
+matching:{
+title:"Matching",
+kicker:"QUESTION TYPE",
+desc:"将题目中的信息与文章中的对应段落、人物或观点建立匹配关系。",
+quote:"匹配题最重要的是先确定题目到底在匹配什么。",
+tags:["信息匹配","定位"],
+time:"37:05"
+},
+
+heading:{
+title:"Heading",
+kicker:"QUESTION TYPE",
+desc:"通过理解段落核心意思，将标题与对应段落进行匹配。",
+quote:"Heading 不是找一个句子，而是判断整个段落到底在讲什么。",
+tags:["段落主旨","信息匹配"],
+time:"42:18"
+},
+
+true:{
+title:"TRUE",
+kicker:"T / F / NG",
+desc:"题干表达的信息能够在原文中找到明确支持。",
+quote:"如果原文明确支持题目的意思，我们才能判断 True。",
+tags:["原文支持"],
+time:"33:12"
+},
+
+false:{
+title:"FALSE",
+kicker:"T / F / NG",
+desc:"题干表达的信息与原文明确存在冲突。",
+quote:"False 是原文告诉你，它不是这样的。",
+tags:["原文相反","易错"],
+time:"33:48"
+},
+
+ng:{
+title:"NOT GIVEN",
+kicker:"T / F / NG",
+desc:"原文没有提供足够信息判断题干所说的内容。",
+insight:"不要因为自己觉得“不可能”就选择 False。只有原文明确相反，才是 False。",
+quote:"原文没有说，不代表原文说的是错的，这就是 Not Given。",
+tags:["原文缺失","易错","老师重点"],
+time:"34:26"
+}
+
+};
+
+
+/* =========================================================
+   RELATION
+========================================================= */
+
+const RELATIONS=[
+
+["root","exam"],
+["root","types"],
+["root","score"],
+["root","plan"],
+
+["types","fill"],
+["types","tfng"],
+["types","matching"],
+["types","heading"],
+
+["tfng","true"],
+["tfng","false"],
+["tfng","ng"]
+
+];
+
+
+/* =========================================================
+   CHILDREN
+========================================================= */
+
+const CHILDREN={
+
+root:[
+"exam",
+"types",
+"score",
+"plan"
+],
+
+types:[
+"fill",
+"tfng",
+"matching",
+"heading"
+],
+
+tfng:[
+"true",
+"false",
+"ng"
+]
+
+};
+
+
+/* =========================================================
+   DOM
+========================================================= */
+
+const canvas=
+document.getElementById("infiniteCanvas");
+
+const world=
+document.getElementById("world");
+
+const svg=
+document.getElementById("connections");
+
+const complete=
+document.getElementById("complete");
+
+const zoomValue=
+document.getElementById("zoomValue");
+
+
+/* =========================================================
+   VIEWPORT STATE
+========================================================= */
+
+/*
+   tx / ty = 世界坐标在屏幕上的偏移
+   scale = 缩放比例
+*/
+
+let scale=0.78;
+
+let tx=0;
+let ty=0;
+
+
+/*
+   初始视图
+*/
+
+function resetView(){
+
+    const rect=
+        canvas.getBoundingClientRect();
+
+    const worldWidth=2400;
+    const worldHeight=1600;
+
+    const targetX=
+        (rect.width-worldWidth*scale)/2;
+
+    const targetY=
+        (rect.height-worldHeight*scale)/2;
+
+    tx=targetX;
+    ty=targetY;
+
+    updateWorldTransform();
+
+}
+
+
+/*
+   世界变换
+*/
+
+function updateWorldTransform(){
+
+    world.style.transform=
+        `translate(${tx}px,${ty}px) scale(${scale})`;
+
+    zoomValue.textContent=
+        Math.round(scale*100)+"%";
+
+    drawConnections();
+
+}
+
+
+/* =========================================================
+   MOUSE → WORLD
+========================================================= */
+
+function screenToWorld(clientX,clientY){
+
+    const rect=
+        canvas.getBoundingClientRect();
+
+    return {
+
+        x:
+            (clientX-rect.left-tx)/scale,
+
+        y:
+            (clientY-rect.top-ty)/scale
+
+    };
+
+}
+
+
+/* =========================================================
+   CANVAS DRAG
+========================================================= */
+
+let canvasDragging=false;
+
+let canvasStartX=0;
+let canvasStartY=0;
+
+let canvasStartTx=0;
+let canvasStartTy=0;
+
+
+canvas.addEventListener(
+"pointerdown",
+e=>{
+
+    /*
+       点击节点不启动画布拖动
+    */
+
+    if(e.target.closest(".node")){
+        return;
+    }
+
+    if(
+        e.target.closest(".zoom-control") ||
+        e.target.closest(".complete")
+    ){
+        return;
+    }
+
+    canvasDragging=true;
+
+    canvas.classList.add("dragging");
+
+    canvasStartX=e.clientX;
+    canvasStartY=e.clientY;
+
+    canvasStartTx=tx;
+    canvasStartTy=ty;
+
+    canvas.setPointerCapture(e.pointerId);
+
+});
+
+
+canvas.addEventListener(
+"pointermove",
+e=>{
+
+    if(!canvasDragging) return;
+
+    tx=
+        canvasStartTx+
+        (e.clientX-canvasStartX);
+
+    ty=
+        canvasStartTy+
+        (e.clientY-canvasStartY);
+
+    updateWorldTransform();
+
+});
+
+
+canvas.addEventListener(
+"pointerup",
+e=>{
+
+    canvasDragging=false;
+
+    canvas.classList.remove("dragging");
+
+});
+
+
+canvas.addEventListener(
+"pointercancel",
+()=>{
+    canvasDragging=false;
+    canvas.classList.remove("dragging");
+});
+
+
+/* =========================================================
+   DOUBLE CLICK RESET
+========================================================= */
+
+canvas.addEventListener(
+"dblclick",
+e=>{
+
+    if(e.target.closest(".node")){
+        return;
+    }
+
+    resetView();
+
+});
+
+
+/* =========================================================
+   ZOOM
+========================================================= */
+
+function zoomAt(
+    clientX,
+    clientY,
+    newScale
+){
+
+    const oldScale=scale;
+
+    newScale=
+        Math.max(
+            0.35,
+            Math.min(1.8,newScale)
+        );
+
+    if(newScale===oldScale){
+        return;
+    }
+
+    const rect=
+        canvas.getBoundingClientRect();
+
+    const mouseX=
+        clientX-rect.left;
+
+    const mouseY=
+        clientY-rect.top;
+
+
+    /*
+       保持鼠标下方的世界位置不动
+    */
+
+    const worldX=
+        (mouseX-tx)/oldScale;
+
+    const worldY=
+        (mouseY-ty)/oldScale;
+
+
+    scale=newScale;
+
+    tx=
+        mouseX-worldX*scale;
+
+    ty=
+        mouseY-worldY*scale;
+
+    updateWorldTransform();
+
+}
+
+
+canvas.addEventListener(
+"wheel",
+e=>{
+
+    e.preventDefault();
+
+    const factor=
+        e.deltaY<0
+            ? 1.08
+            : 0.925;
+
+    zoomAt(
+        e.clientX,
+        e.clientY,
+        scale*factor
+    );
+
+},
+{passive:false}
+);
+
+
+document
+.getElementById("zoomIn")
+.addEventListener(
+"click",
+()=>{
+
+    const rect=
+        canvas.getBoundingClientRect();
+
+    zoomAt(
+        rect.left+rect.width/2,
+        rect.top+rect.height/2,
+        scale*1.12
+    );
+
+});
+
+
+document
+.getElementById("zoomOut")
+.addEventListener(
+"click",
+()=>{
+
+    const rect=
+        canvas.getBoundingClientRect();
+
+    zoomAt(
+        rect.left+rect.width/2,
+        rect.top+rect.height/2,
+        scale*.89
+    );
+
+});
+
+
+/* =========================================================
+   NODE POSITION
+========================================================= */
+
+function getNode(id){
+
+    return document.querySelector(
+        `[data-node="${id}"]`
+    );
+
+}
+
+
+function getNodeCenter(id){
+
+    const node=getNode(id);
+
+    if(!node) return null;
+
+    return {
+
+        x:
+            node.offsetLeft+
+            node.offsetWidth/2,
+
+        y:
+            node.offsetTop+
+            node.offsetHeight/2
+
+    };
+
+}
+
+
+/* =========================================================
+   DRAW CONNECTIONS
+========================================================= */
+
+function drawConnections(){
+
+    svg.innerHTML="";
+
+    RELATIONS.forEach(
+        ([from,to])=>{
+
+            const a=getNode(from);
+            const b=getNode(to);
+
+            if(!a || !b) return;
+
+            if(
+                a.classList.contains("hidden") ||
+                b.classList.contains("hidden")
+            ){
+                return;
+            }
+
+            const p1=
+                getNodeCenter(from);
+
+            const p2=
+                getNodeCenter(to);
+
+            if(!p1 || !p2) return;
+
+
+            /*
+               用轻微弯曲的路径，
+               比直线更像知识星云。
+            */
+
+            const dx=
+                p2.x-p1.x;
+
+            const curve=
+                Math.max(
+                    60,
+                    Math.abs(dx)*.28
+                );
+
+            let c1x;
+            let c2x;
+
+            if(dx>=0){
+
+                c1x=p1.x+curve;
+                c2x=p2.x-curve;
+
+            }else{
+
+                c1x=p1.x-curve;
+                c2x=p2.x+curve;
+
+            }
+
+
+            const path=
+                document.createElementNS(
+                    "http://www.w3.org/2000/svg",
+                    "path"
+                );
+
+            path.classList.add(
+                "connection"
+            );
+
+            if(
+                from==="tfng" ||
+                to==="tfng" ||
+                from==="ng" ||
+                to==="ng"
+            ){
+
+                path.classList.add(
+                    "teacher"
+                );
+
+            }
+
+
+            path.setAttribute(
+                "d",
+                `
+                M ${p1.x} ${p1.y}
+                C ${c1x} ${p1.y},
+                  ${c2x} ${p2.y},
+                  ${p2.x} ${p2.y}
+                `
+            );
+
+
+            svg.appendChild(path);
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   NODE DRAG
+========================================================= */
+
+let draggingNode=null;
+
+let nodeStartX=0;
+let nodeStartY=0;
+
+let pointerStartX=0;
+let pointerStartY=0;
+
+
+document
+.querySelectorAll(".node")
+.forEach(node=>{
+
+    node.addEventListener(
+    "pointerdown",
+    e=>{
+
+        e.stopPropagation();
+
+        draggingNode=node;
+
+        node.classList.add(
+            "dragging-node"
+        );
+
+        pointerStartX=e.clientX;
+        pointerStartY=e.clientY;
+
+        nodeStartX=
+            parseFloat(node.style.left);
+
+        nodeStartY=
+            parseFloat(node.style.top);
+
+        node.setPointerCapture(
+            e.pointerId
+        );
+
+    });
+
+
+    node.addEventListener(
+    "pointermove",
+    e=>{
+
+        if(
+            draggingNode!==node
+        ){
+            return;
+        }
+
+        const dx=
+            (e.clientX-pointerStartX)
+            /scale;
+
+        const dy=
+            (e.clientY-pointerStartY)
+            /scale;
+
+        node.style.left=
+            (nodeStartX+dx)+"px";
+
+        node.style.top=
+            (nodeStartY+dy)+"px";
+
+        drawConnections();
+
+    });
+
+
+    node.addEventListener(
+    "pointerup",
+    e=>{
+
+        if(
+            draggingNode!==node
+        ){
+            return;
+        }
+
+        draggingNode=null;
+
+        node.classList.remove(
+            "dragging-node"
+        );
+
+    });
+
+
+    node.addEventListener(
+    "pointercancel",
+    ()=>{
+
+        if(
+            draggingNode!==node
+        ){
+            return;
+        }
+
+        draggingNode=null;
+
+        node.classList.remove(
+            "dragging-node"
+        );
+
+    });
+
+});
+
+
+/* =========================================================
+   NODE CLICK
+========================================================= */
+
+let nodeMoved=false;
+
+
+/*
+   为了区分：
+   点击节点 = 展开
+   拖动节点 = 移动
+*/
+
+document
+.querySelectorAll(".node")
+.forEach(node=>{
+
+    let downX=0;
+    let downY=0;
+
+    node.addEventListener(
+    "pointerdown",
+    e=>{
+
+        downX=e.clientX;
+        downY=e.clientY;
+
+        nodeMoved=false;
+
+    });
+
+
+    node.addEventListener(
+    "pointermove",
+    e=>{
+
+        if(
+            Math.abs(e.clientX-downX)>4 ||
+            Math.abs(e.clientY-downY)>4
+        ){
+
+            nodeMoved=true;
+
+        }
+
+    });
+
+
+    node.addEventListener(
+    "click",
+    e=>{
+
+        e.stopPropagation();
+
+        if(nodeMoved){
+            return;
+        }
+
+        const id=
+            node.dataset.node;
+
+        openNode(id);
+
+    });
+
+});
+
+
+/* =========================================================
+   CHILD REVEAL
+========================================================= */
+
+function revealChildren(id){
+
+    const children=
+        CHILDREN[id];
+
+    if(!children){
+        return;
+    }
+
+    children.forEach(
+        child=>{
+
+            const node=
+                getNode(child);
+
+            if(!node){
+                return;
+            }
+
+            node.classList.remove(
+                "hidden"
+            );
+
+            node.classList.add(
+                "show"
+            );
+
+        }
+    );
+
+    setTimeout(
+        drawConnections,
+        30
+    );
+
+}
+
+
+/* =========================================================
+   NODE OPEN
+========================================================= */
+
+function openNode(id){
+
+    revealChildren(id);
+
+    openDetail(id);
+
+    document
+    .querySelectorAll(
+        ".tree-item"
+    )
+    .forEach(item=>{
+
+        item.classList.remove(
+            "active"
+        );
+
+        if(
+            item.dataset.target===id
+        ){
+
+            item.classList.add(
+                "active"
+            );
+
+        }
+
+    });
+
+    checkComplete();
+
+}
+
+
+/* =========================================================
+   DETAIL
+========================================================= */
+
+const detail=
+document.getElementById("detail");
+
+const emptyDetail=
+document.getElementById("emptyDetail");
+
+const detailHeader=
+document.getElementById("detailContent");
+
+const detailKicker=
+document.getElementById("detailKicker");
+
+const detailTitle=
+document.getElementById("detailTitle");
+
+const detailDesc=
+document.getElementById("detailDesc");
+
+const insightSection=
+document.getElementById(
+    "insightSection"
+);
+
+const insight=
+document.getElementById("insight");
+
+const quote=
+document.getElementById("quote");
+
+const tags=
+document.getElementById("tags");
+
+const timeText=
+document.getElementById("timeText");
+
+const videoTime=
+document.getElementById(
+    "videoTime"
+);
+
+
+function openDetail(id){
+
+    const data=DATA[id];
+
+    if(!data){
+        return;
+    }
+
+    emptyDetail.style.display=
+        "none";
+
+    detail.classList.add(
+        "active"
+    );
+
+    detailKicker.textContent=
+        data.kicker;
+
+    detailTitle.textContent=
+        data.title;
+
+    detailDesc.textContent=
+        data.desc;
+
+    quote.textContent=
+        data.quote;
+
+    timeText.textContent=
+        data.time;
+
+    videoTime.textContent=
+        data.time;
+
+    tags.innerHTML="";
+
+    (data.tags||[]).forEach(
+        tag=>{
+
+            const el=
+                document.createElement(
+                    "div"
+                );
+
+            el.className="tag";
+
+            el.textContent=tag;
+
+            tags.appendChild(el);
+
+        }
+    );
+
+
+    if(data.insight){
+
+        insightSection.style.display=
+            "block";
+
+        insight.textContent=
+            data.insight;
+
+    }else{
+
+        insightSection.style.display=
+            "none";
+
+    }
+
+}
+
+
+/* =========================================================
+   LEFT TREE
+========================================================= */
+
+document
+.querySelectorAll(
+    ".tree-item[data-target]"
+)
+.forEach(item=>{
+
+    item.addEventListener(
+    "click",
+    ()=>{
+
+        const id=
+            item.dataset.target;
+
+        const node=
+            getNode(id);
+
+        if(!node){
+            return;
+        }
+
+
+        /*
+           如果左侧点击了尚未出现的节点，
+           自动打开它的父级路径。
+        */
+
+        if(
+            node.classList.contains(
+                "hidden"
+            )
+        ){
+
+            if(
+                ["exam",
+                "types",
+                "score",
+                "plan"]
+                .includes(id)
+            ){
+
+                revealChildren("root");
+
+            }
+
+
+            if(
+                ["fill",
+                "tfng",
+                "matching",
+                "heading"]
+                .includes(id)
+            ){
+
+                revealChildren("root");
+
+                revealChildren("types");
+
+            }
+
+
+            if(
+                ["true",
+                "false",
+                "ng"]
+                .includes(id)
+            ){
+
+                revealChildren("root");
+
+                revealChildren("types");
+
+                revealChildren("tfng");
+
+            }
+
+        }
+
+
+        setTimeout(
+            ()=>{
+
+                openDetail(id);
+
+                drawConnections();
+
+            },
+            50
+        );
+
+    });
+
+});
+
+
+/* =========================================================
+   COMPLETION
+========================================================= */
+
+function checkComplete(){
+
+    const ids=[
+
+        "exam",
+        "types",
+        "score",
+        "plan",
+
+        "fill",
+        "tfng",
+        "matching",
+        "heading",
+
+        "true",
+        "false",
+        "ng"
+
+    ];
+
+
+    const completeMap=
+        ids.every(
+            id=>{
+
+                const node=
+                    getNode(id);
+
+                return node &&
+                    !node.classList.contains(
+                        "hidden"
+                    );
+
+            }
+        );
+
+
+    if(completeMap){
+
+        complete.classList.add(
+            "visible"
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   VIDEO / TIMESTAMP
+========================================================= */
+
+document
+.getElementById("timestamp")
+.addEventListener(
+"click",
+()=>{
+
+    alert(
+        "这里将跳转到课程视频 "+
+        timeText.textContent
+    );
+
+});
+
+
+document
+.getElementById("videoPreview")
+.addEventListener(
+"click",
+()=>{
+
+    alert(
+        "这里将打开视频并定位到 "+
+        videoTime.textContent
+    );
+
+});
+
+
+/* =========================================================
+   INITIAL
+========================================================= */
+
+function init(){
+
+    /*
+       根节点默认显示
+    */
+
+    const root=
+        getNode("root");
+
+    root.classList.remove(
+        "hidden"
+    );
+
+
+    /*
+       第一层默认显示
+    */
+
+    setTimeout(
+        ()=>{
+
+            revealChildren(
+                "root"
+            );
+
+        },
+        250
+    );
+
+
+    /*
+       初始画布居中
+    */
+
+    setTimeout(
+        resetView,
+        50
+    );
+
+}
+
+
+init();
+
+
+/* =========================================================
+   RESIZE
+========================================================= */
+
+window.addEventListener(
+"resize",
+()=>{
+    resetView();
+});
+
+
+</script>
+
+</body>
+</html>
